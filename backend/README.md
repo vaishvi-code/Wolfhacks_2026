@@ -1,9 +1,9 @@
 # Geospatial backend and generic risk routing
 
 Python 3.9+ library for North Carolina road-network and destination queries.
-Includes source-independent hazard mapping and configurable routing policy.
-No frontend, server, live hazard APIs, disaster-specific scientific model, or
-synchronization is included.
+Includes source-independent hazard mapping, configurable routing policy, and
+official NWS/USGS flood adapters. No frontend, server, disaster-specific scientific
+model, or synchronization is included.
 
 ## Structure
 
@@ -15,6 +15,8 @@ synchronization is included.
 - `survival_geo/risk_routing.py`: cost adapter and route comparison.
 - `survival_geo/destination_safety.py`: destination exclusion with reasons.
 - `survival_geo/demo.py`: synthetic graph and offline route comparison.
+- `survival_geo/flood/`: official flood sources, freshness, alert-area adaptation,
+  and a live demo; see [Flood adapter documentation](FLOOD.md).
 - `survival_geo/errors.py`, `validation.py`: shared errors and input checks.
 - `tests/`: synthetic graphs and mocked OSM requests; no live downloads.
 
@@ -250,7 +252,8 @@ destination plus hazard IDs, reasons, and evaluation time. Acceptance means only
 that this geometric exclusion rule did not reject it; reachability, availability,
 and ranking remain separate concerns.
 
-Future flood/hurricane/heat adapters should translate their input to `Hazard`
+The flood adapter now demonstrates this extension in [FLOOD.md](FLOOD.md).
+Future hurricane/heat adapters should translate their input to `Hazard`
 records, supply footprints and severity labels, and provide a `RiskPolicy`
 mapping. Override `RiskPolicy.level_for(hazard)` to inspect hazard type or metadata
 without changing the routing engine. For more advanced per-road analysis, a

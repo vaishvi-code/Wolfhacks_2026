@@ -1,0 +1,66 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:fixture-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.637,
+              35.7698
+            ],
+            [
+              -78.633,
+              35.7698
+            ],
+            [
+              -78.633,
+              35.7702
+            ],
+            [
+              -78.637,
+              35.7702
+            ],
+            [
+              -78.637,
+              35.7698
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:fixture-warning",
+        "event": "Flood Warning",
+        "severity": "Severe",
+        "status": "Actual",
+        "messageType": "Alert",
+        "certainty": "Observed",
+        "urgency": "Immediate",
+        "sent": "2026-10-03T06:00:00-04:00",
+        "effective": "2026-10-03T06:00:00-04:00",
+        "onset": "2026-10-03T06:15:00-04:00",
+        "expires": "2026-10-03T09:00:00-04:00",
+        "ends": null,
+        "headline": "SYNTHETIC FIXTURE: Flood Warning",
+        "description": "Synthetic warning for offline adapter tests. Not a real alert.",
+        "instruction": "Synthetic test instructions; consult official emergency guidance.",
+        "areaDesc": "Synthetic Raleigh test area",
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/NCC183"
+        ],
+        "geocode": {
+          "UGC": [
+            "NCC183"
+          ]
+        },
+        "senderName": "NWS synthetic fixture",
+        "references": [],
+        "parameters": {},
+        "web": "https://www.weather.gov/"
+      }
+    }
+  ]
+}
