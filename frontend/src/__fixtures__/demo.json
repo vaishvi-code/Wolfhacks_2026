@@ -1,0 +1,1080 @@
+{
+  "status": {
+    "api_version": 1,
+    "workspace_id": "demo-v1",
+    "demo": true,
+    "demo_stage": 0,
+    "offline": false,
+    "origin": [
+      35.77,
+      -78.64
+    ],
+    "data_state": {
+      "mode": "CACHED",
+      "evaluated_at": "2026-10-03T14:10:00+00:00",
+      "snapshot_created_at": "2026-10-03T14:10:00+00:00",
+      "hazard_coverage_state": "available",
+      "sources": {
+        "flood_nws": {
+          "status": "available",
+          "fetch_freshness": "current",
+          "fetched_at": "2026-10-03T14:10:00+00:00",
+          "issues": []
+        },
+        "heat_nws": {
+          "status": "available",
+          "fetch_freshness": "current",
+          "fetched_at": "2026-10-03T14:10:00+00:00",
+          "issues": []
+        },
+        "hurricane_nws": {
+          "status": "available",
+          "fetch_freshness": "current",
+          "fetched_at": "2026-10-03T14:10:00+00:00",
+          "issues": []
+        }
+      }
+    },
+    "hazards": [
+      {
+        "id": "nws:synthetic-flood-warning",
+        "hazard_type": "flood",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -78.632,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7699
+              ]
+            ]
+          ]
+        },
+        "severity": "high",
+        "source": "NOAA/NWS",
+        "confidence": 1.0,
+        "timestamp": "2026-10-03T14:10:00+00:00",
+        "metadata": {
+          "headline": null,
+          "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+          "instruction": null,
+          "areaDesc": null,
+          "affectedZones": null,
+          "geocode": null,
+          "certainty": "Likely",
+          "urgency": "Immediate",
+          "sender": null,
+          "senderName": null,
+          "web": null,
+          "references": null,
+          "parameters": null,
+          "response": null,
+          "feature_url": "synthetic-flood-warning",
+          "source_endpoint": "https://api.weather.gov/alerts/active",
+          "official_alert_id": "synthetic-flood-warning",
+          "event": "Flood Warning",
+          "official_severity": "Severe",
+          "sent": "2026-10-03T14:10:00+00:00",
+          "effective": "2026-10-03T14:10:00+00:00",
+          "onset": "2026-10-03T14:10:00+00:00",
+          "expires": "2026-10-03T16:10:00+00:00",
+          "ends": null,
+          "fetched_at": "2026-10-03T14:10:00+00:00",
+          "freshness": "current",
+          "data_origin": "local",
+          "source_status": "available",
+          "evidence_kind": "official_alert_area",
+          "confidence_basis": "configured source confidence; not a flood probability",
+          "interpretation": "Alert-area intersection only; does not establish road flooding.",
+          "freshness_policy": {
+            "max_fetch_age_seconds": 900.0,
+            "max_observation_age_seconds": null,
+            "future_clock_tolerance_seconds": 120.0
+          },
+          "reason": "Intersects Flood Warning official alert area; does not establish physical road flooding.",
+          "data_state": "LOCAL_CURRENT"
+        }
+      },
+      {
+        "id": "nws:synthetic-excessive-heat-warning",
+        "hazard_type": "heat",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -78.632,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7699
+              ]
+            ]
+          ]
+        },
+        "severity": "high",
+        "source": "NOAA/NWS",
+        "confidence": 1.0,
+        "timestamp": "2026-10-03T14:10:00+00:00",
+        "metadata": {
+          "headline": null,
+          "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+          "instruction": null,
+          "areaDesc": null,
+          "affectedZones": null,
+          "geocode": null,
+          "certainty": "Likely",
+          "urgency": "Immediate",
+          "sender": null,
+          "senderName": null,
+          "web": null,
+          "references": null,
+          "parameters": null,
+          "response": null,
+          "feature_url": "synthetic-excessive-heat-warning",
+          "source_endpoint": "https://api.weather.gov/alerts/active",
+          "official_alert_id": "synthetic-excessive-heat-warning",
+          "event": "Excessive Heat Warning",
+          "official_severity": "Severe",
+          "sent": "2026-10-03T14:10:00+00:00",
+          "effective": "2026-10-03T14:10:00+00:00",
+          "onset": "2026-10-03T14:10:00+00:00",
+          "expires": "2026-10-03T16:10:00+00:00",
+          "ends": null,
+          "fetched_at": "2026-10-03T14:10:00+00:00",
+          "freshness": "current",
+          "data_origin": "local",
+          "source_status": "available",
+          "evidence_kind": "official_alert_area",
+          "confidence_basis": "configured source confidence; not a heat probability",
+          "interpretation": "Official heat alert area; physical road impassability is not established.",
+          "effect": "heat_exposure",
+          "alert_stage": "warning",
+          "freshness_policy": {
+            "max_fetch_age_seconds": 900.0,
+            "max_observation_age_seconds": null,
+            "future_clock_tolerance_seconds": 120.0
+          },
+          "risk_mapping": {
+            "level": "HIGH_RISK",
+            "blocking_reason": null
+          },
+          "reason": "Road intersects active Excessive Heat Warning area; this does not establish physical road blockage.",
+          "data_state": "LOCAL_CURRENT"
+        }
+      },
+      {
+        "id": "nws:synthetic-Hurricane-Warning",
+        "hazard_type": "hurricane",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -78.632,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7699
+              ]
+            ]
+          ]
+        },
+        "severity": "high",
+        "source": "NOAA/NWS",
+        "confidence": 1.0,
+        "timestamp": "2026-10-03T14:10:00+00:00",
+        "metadata": {
+          "headline": null,
+          "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+          "instruction": null,
+          "areaDesc": null,
+          "affectedZones": null,
+          "geocode": null,
+          "certainty": "Likely",
+          "urgency": "Immediate",
+          "sender": null,
+          "senderName": null,
+          "web": null,
+          "references": null,
+          "parameters": null,
+          "response": null,
+          "feature_url": "synthetic-excessive-heat-warning",
+          "source_endpoint": "https://api.weather.gov/alerts/active",
+          "official_alert_id": "synthetic-Hurricane-Warning",
+          "event": "Hurricane Warning",
+          "official_severity": "Severe",
+          "sent": "2026-10-03T14:10:00+00:00",
+          "effective": "2026-10-03T14:10:00+00:00",
+          "onset": "2026-10-03T14:10:00+00:00",
+          "expires": "2026-10-03T16:10:00+00:00",
+          "ends": null,
+          "fetched_at": "2026-10-03T14:10:00+00:00",
+          "freshness": "current",
+          "data_origin": "local",
+          "source_status": "available",
+          "evidence_kind": "official_alert_area",
+          "confidence_basis": "configured source confidence; not a hurricane probability",
+          "interpretation": "Official tropical alert area; physical road impassability is not established.",
+          "effect": "tropical_cyclone_wind",
+          "storm_name": null,
+          "storm_id": null,
+          "alert_stage": "warning",
+          "freshness_policy": {
+            "max_fetch_age_seconds": 900.0,
+            "max_observation_age_seconds": null,
+            "future_clock_tolerance_seconds": 120.0
+          },
+          "risk_mapping": {
+            "level": "HIGH_RISK",
+            "blocking_reason": null
+          },
+          "reason": "Road intersects active Hurricane Warning area; this does not establish physical road blockage.",
+          "data_state": "LOCAL_CURRENT"
+        }
+      },
+      {
+        "id": "nws:synthetic-Storm-Surge-Warning",
+        "hazard_type": "hurricane",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -78.632,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7701
+              ],
+              [
+                -78.633,
+                35.7699
+              ],
+              [
+                -78.632,
+                35.7699
+              ]
+            ]
+          ]
+        },
+        "severity": "high",
+        "source": "NOAA/NWS",
+        "confidence": 1.0,
+        "timestamp": "2026-10-03T14:10:00+00:00",
+        "metadata": {
+          "headline": null,
+          "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+          "instruction": null,
+          "areaDesc": null,
+          "affectedZones": null,
+          "geocode": null,
+          "certainty": "Likely",
+          "urgency": "Immediate",
+          "sender": null,
+          "senderName": null,
+          "web": null,
+          "references": null,
+          "parameters": null,
+          "response": null,
+          "feature_url": "synthetic-excessive-heat-warning",
+          "source_endpoint": "https://api.weather.gov/alerts/active",
+          "official_alert_id": "synthetic-Storm-Surge-Warning",
+          "event": "Storm Surge Warning",
+          "official_severity": "Severe",
+          "sent": "2026-10-03T14:10:00+00:00",
+          "effective": "2026-10-03T14:10:00+00:00",
+          "onset": "2026-10-03T14:10:00+00:00",
+          "expires": "2026-10-03T16:10:00+00:00",
+          "ends": null,
+          "fetched_at": "2026-10-03T14:10:00+00:00",
+          "freshness": "current",
+          "data_origin": "local",
+          "source_status": "available",
+          "evidence_kind": "official_alert_area",
+          "confidence_basis": "configured source confidence; not a hurricane probability",
+          "interpretation": "Official tropical alert area; physical road impassability is not established.",
+          "effect": "storm_surge",
+          "storm_name": null,
+          "storm_id": null,
+          "alert_stage": "warning",
+          "freshness_policy": {
+            "max_fetch_age_seconds": 900.0,
+            "max_observation_age_seconds": null,
+            "future_clock_tolerance_seconds": 120.0
+          },
+          "risk_mapping": {
+            "level": "HIGH_RISK",
+            "blocking_reason": null
+          },
+          "reason": "Road intersects active Storm Surge Warning area; this does not establish physical road blockage.",
+          "data_state": "LOCAL_CURRENT"
+        }
+      }
+    ],
+    "context": [],
+    "hazard_categories": [
+      {
+        "id": "flood",
+        "label": "Flood",
+        "status": "ACTIVE",
+        "active_count": 1,
+        "mapped_count": 1,
+        "data_origin": "local"
+      },
+      {
+        "id": "hurricane",
+        "label": "Hurricane / tropical storm",
+        "status": "ACTIVE",
+        "active_count": 1,
+        "mapped_count": 1,
+        "data_origin": "local"
+      },
+      {
+        "id": "storm_surge",
+        "label": "Storm surge",
+        "status": "ACTIVE",
+        "active_count": 1,
+        "mapped_count": 1,
+        "data_origin": "local"
+      },
+      {
+        "id": "heat",
+        "label": "Extreme heat",
+        "status": "ACTIVE",
+        "active_count": 1,
+        "mapped_count": 1,
+        "data_origin": "local"
+      }
+    ],
+    "roads": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.64,
+                35.77
+              ],
+              [
+                -78.635,
+                35.77
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.64,
+                35.77
+              ],
+              [
+                -78.635,
+                35.773
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.64,
+                35.77
+              ],
+              [
+                -78.635,
+                35.7692
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.635,
+                35.77
+              ],
+              [
+                -78.63,
+                35.77
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.635,
+                35.773
+              ],
+              [
+                -78.63,
+                35.77
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.635,
+                35.773
+              ],
+              [
+                -78.63,
+                35.773
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.635,
+                35.7692
+              ],
+              [
+                -78.63,
+                35.77
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "destinations": {
+    "selected_destination_id": "center-a",
+    "candidates": [
+      {
+        "destination": {
+          "id": "center-a",
+          "name": "Cooling Center A",
+          "latitude": 35.77,
+          "longitude": -78.63,
+          "categories": [
+            "cooling_centre"
+          ],
+          "observed_at": "2026-10-03T14:10:00+00:00",
+          "designated_cooling_center": true,
+          "synthetic": true,
+          "source": "synthetic-government",
+          "official_evidence": {
+            "source_id": "synthetic-government",
+            "authority": "SYNTHETIC GOVERNMENT FIXTURE",
+            "source_url": "https://example.invalid/synthetic-centers",
+            "fetched_at": "2026-10-03T14:10:00+00:00",
+            "observed_at": "2026-10-03T14:10:00+00:00",
+            "expires_at": null,
+            "designated_cooling_center": true
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              -78.63,
+              35.77
+            ]
+          },
+          "classification": "official_cooling_center",
+          "designation_freshness": "current",
+          "open": null,
+          "air_conditioned": null,
+          "accepting_people": null,
+          "safety_verified": false
+        },
+        "eligible": true,
+        "exclusion_reasons": [],
+        "rank": 1
+      },
+      {
+        "destination": {
+          "id": "library-b",
+          "name": "Library B",
+          "latitude": 35.773,
+          "longitude": -78.63,
+          "categories": [
+            "library"
+          ],
+          "source": "OpenStreetMap",
+          "synthetic": true,
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              -78.63,
+              35.773
+            ]
+          },
+          "classification": "potential_heat_relief_location",
+          "designation_freshness": "unknown",
+          "open": null,
+          "air_conditioned": null,
+          "accepting_people": null,
+          "safety_verified": false
+        },
+        "eligible": true,
+        "exclusion_reasons": [],
+        "rank": 2
+      }
+    ],
+    "warnings": [
+      "OPEN_STATUS_AND_RELIEF_CAPABILITY_UNVERIFIED",
+      "NO_SAFETY_GUARANTEE"
+    ],
+    "ranking_order": [
+      "official",
+      "risk_penalty",
+      "affected_distance",
+      "distance",
+      "stable_destination_id"
+    ]
+  },
+  "route": {
+    "route_id": "127f8f14-3700-403e-a8a4-9e48290fda85",
+    "comparison": {
+      "baseline": {
+        "exists": true,
+        "route": {
+          "total_distance_m": 900.0,
+          "route_node_ids": [
+            1,
+            2,
+            3
+          ],
+          "route_geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.64,
+                35.77
+              ],
+              [
+                -78.635,
+                35.77
+              ],
+              [
+                -78.63,
+                35.77
+              ]
+            ]
+          },
+          "affected_edge_count": 1,
+          "total_risk_penalty": 10000.0,
+          "hazard_ids": [
+            "nws:synthetic-Hurricane-Warning",
+            "nws:synthetic-Storm-Surge-Warning",
+            "nws:synthetic-excessive-heat-warning",
+            "nws:synthetic-flood-warning"
+          ],
+          "road_risks": [
+            {
+              "edge_id": {
+                "u": 1,
+                "v": 2,
+                "key": 0
+              },
+              "risk_level": "SAFE",
+              "penalty": 0.0,
+              "hazard_penalty": 0.0,
+              "uncertainty_penalty": 0.0,
+              "passable": true,
+              "reasons": [
+                "No supplied hazard intersects this road."
+              ],
+              "hazard_ids": [],
+              "confidence": null,
+              "evaluated_at": "2026-10-03T14:10:00+00:00",
+              "contributions": []
+            },
+            {
+              "edge_id": {
+                "u": 2,
+                "v": 3,
+                "key": 0
+              },
+              "risk_level": "HIGH_RISK",
+              "penalty": 10000.0,
+              "hazard_penalty": 10000.0,
+              "uncertainty_penalty": 0.0,
+              "passable": true,
+              "reasons": [
+                "nws:synthetic-Hurricane-Warning: hurricane severity=high mapped to HIGH_RISK",
+                "nws:synthetic-Storm-Surge-Warning: hurricane severity=high mapped to HIGH_RISK",
+                "nws:synthetic-excessive-heat-warning: heat severity=high mapped to HIGH_RISK",
+                "nws:synthetic-flood-warning: flood severity=high mapped to HIGH_RISK"
+              ],
+              "hazard_ids": [
+                "nws:synthetic-Hurricane-Warning",
+                "nws:synthetic-Storm-Surge-Warning",
+                "nws:synthetic-excessive-heat-warning",
+                "nws:synthetic-flood-warning"
+              ],
+              "confidence": 1.0,
+              "evaluated_at": "2026-10-03T14:10:00+00:00",
+              "contributions": [
+                {
+                  "hazard_id": "nws:synthetic-Hurricane-Warning",
+                  "hazard_type": "hurricane",
+                  "severity": "high",
+                  "risk_level": "HIGH_RISK",
+                  "hazard_penalty": 2500.0,
+                  "uncertainty_penalty": 0.0,
+                  "passable": true,
+                  "applies_because": "edge_geometry_intersects_hazard_geometry",
+                  "reason": "Road intersects active Hurricane Warning area; this does not establish physical road blockage.",
+                  "source": "NOAA/NWS",
+                  "confidence": 1.0,
+                  "timestamp": "2026-10-03T14:10:00+00:00",
+                  "freshness": "current",
+                  "evidence": {
+                    "headline": null,
+                    "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+                    "instruction": null,
+                    "areaDesc": null,
+                    "affectedZones": null,
+                    "geocode": null,
+                    "certainty": "Likely",
+                    "urgency": "Immediate",
+                    "sender": null,
+                    "senderName": null,
+                    "web": null,
+                    "references": null,
+                    "parameters": null,
+                    "response": null,
+                    "feature_url": "synthetic-excessive-heat-warning",
+                    "source_endpoint": "https://api.weather.gov/alerts/active",
+                    "official_alert_id": "synthetic-Hurricane-Warning",
+                    "event": "Hurricane Warning",
+                    "official_severity": "Severe",
+                    "sent": "2026-10-03T14:10:00+00:00",
+                    "effective": "2026-10-03T14:10:00+00:00",
+                    "onset": "2026-10-03T14:10:00+00:00",
+                    "expires": "2026-10-03T16:10:00+00:00",
+                    "ends": null,
+                    "fetched_at": "2026-10-03T14:10:00+00:00",
+                    "freshness": "current",
+                    "data_origin": "local",
+                    "source_status": "available",
+                    "evidence_kind": "official_alert_area",
+                    "confidence_basis": "configured source confidence; not a hurricane probability",
+                    "interpretation": "Official tropical alert area; physical road impassability is not established.",
+                    "effect": "tropical_cyclone_wind",
+                    "storm_name": null,
+                    "storm_id": null,
+                    "alert_stage": "warning",
+                    "freshness_policy": {
+                      "max_fetch_age_seconds": 900.0,
+                      "max_observation_age_seconds": null,
+                      "future_clock_tolerance_seconds": 120.0
+                    },
+                    "risk_mapping": {
+                      "level": "HIGH_RISK",
+                      "blocking_reason": null
+                    },
+                    "reason": "Road intersects active Hurricane Warning area; this does not establish physical road blockage.",
+                    "data_state": "LOCAL_CURRENT"
+                  }
+                },
+                {
+                  "hazard_id": "nws:synthetic-Storm-Surge-Warning",
+                  "hazard_type": "hurricane",
+                  "severity": "high",
+                  "risk_level": "HIGH_RISK",
+                  "hazard_penalty": 2500.0,
+                  "uncertainty_penalty": 0.0,
+                  "passable": true,
+                  "applies_because": "edge_geometry_intersects_hazard_geometry",
+                  "reason": "Road intersects active Storm Surge Warning area; this does not establish physical road blockage.",
+                  "source": "NOAA/NWS",
+                  "confidence": 1.0,
+                  "timestamp": "2026-10-03T14:10:00+00:00",
+                  "freshness": "current",
+                  "evidence": {
+                    "headline": null,
+                    "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+                    "instruction": null,
+                    "areaDesc": null,
+                    "affectedZones": null,
+                    "geocode": null,
+                    "certainty": "Likely",
+                    "urgency": "Immediate",
+                    "sender": null,
+                    "senderName": null,
+                    "web": null,
+                    "references": null,
+                    "parameters": null,
+                    "response": null,
+                    "feature_url": "synthetic-excessive-heat-warning",
+                    "source_endpoint": "https://api.weather.gov/alerts/active",
+                    "official_alert_id": "synthetic-Storm-Surge-Warning",
+                    "event": "Storm Surge Warning",
+                    "official_severity": "Severe",
+                    "sent": "2026-10-03T14:10:00+00:00",
+                    "effective": "2026-10-03T14:10:00+00:00",
+                    "onset": "2026-10-03T14:10:00+00:00",
+                    "expires": "2026-10-03T16:10:00+00:00",
+                    "ends": null,
+                    "fetched_at": "2026-10-03T14:10:00+00:00",
+                    "freshness": "current",
+                    "data_origin": "local",
+                    "source_status": "available",
+                    "evidence_kind": "official_alert_area",
+                    "confidence_basis": "configured source confidence; not a hurricane probability",
+                    "interpretation": "Official tropical alert area; physical road impassability is not established.",
+                    "effect": "storm_surge",
+                    "storm_name": null,
+                    "storm_id": null,
+                    "alert_stage": "warning",
+                    "freshness_policy": {
+                      "max_fetch_age_seconds": 900.0,
+                      "max_observation_age_seconds": null,
+                      "future_clock_tolerance_seconds": 120.0
+                    },
+                    "risk_mapping": {
+                      "level": "HIGH_RISK",
+                      "blocking_reason": null
+                    },
+                    "reason": "Road intersects active Storm Surge Warning area; this does not establish physical road blockage.",
+                    "data_state": "LOCAL_CURRENT"
+                  }
+                },
+                {
+                  "hazard_id": "nws:synthetic-excessive-heat-warning",
+                  "hazard_type": "heat",
+                  "severity": "high",
+                  "risk_level": "HIGH_RISK",
+                  "hazard_penalty": 2500.0,
+                  "uncertainty_penalty": 0.0,
+                  "passable": true,
+                  "applies_because": "edge_geometry_intersects_hazard_geometry",
+                  "reason": "Road intersects active Excessive Heat Warning area; this does not establish physical road blockage.",
+                  "source": "NOAA/NWS",
+                  "confidence": 1.0,
+                  "timestamp": "2026-10-03T14:10:00+00:00",
+                  "freshness": "current",
+                  "evidence": {
+                    "headline": null,
+                    "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+                    "instruction": null,
+                    "areaDesc": null,
+                    "affectedZones": null,
+                    "geocode": null,
+                    "certainty": "Likely",
+                    "urgency": "Immediate",
+                    "sender": null,
+                    "senderName": null,
+                    "web": null,
+                    "references": null,
+                    "parameters": null,
+                    "response": null,
+                    "feature_url": "synthetic-excessive-heat-warning",
+                    "source_endpoint": "https://api.weather.gov/alerts/active",
+                    "official_alert_id": "synthetic-excessive-heat-warning",
+                    "event": "Excessive Heat Warning",
+                    "official_severity": "Severe",
+                    "sent": "2026-10-03T14:10:00+00:00",
+                    "effective": "2026-10-03T14:10:00+00:00",
+                    "onset": "2026-10-03T14:10:00+00:00",
+                    "expires": "2026-10-03T16:10:00+00:00",
+                    "ends": null,
+                    "fetched_at": "2026-10-03T14:10:00+00:00",
+                    "freshness": "current",
+                    "data_origin": "local",
+                    "source_status": "available",
+                    "evidence_kind": "official_alert_area",
+                    "confidence_basis": "configured source confidence; not a heat probability",
+                    "interpretation": "Official heat alert area; physical road impassability is not established.",
+                    "effect": "heat_exposure",
+                    "alert_stage": "warning",
+                    "freshness_policy": {
+                      "max_fetch_age_seconds": 900.0,
+                      "max_observation_age_seconds": null,
+                      "future_clock_tolerance_seconds": 120.0
+                    },
+                    "risk_mapping": {
+                      "level": "HIGH_RISK",
+                      "blocking_reason": null
+                    },
+                    "reason": "Road intersects active Excessive Heat Warning area; this does not establish physical road blockage.",
+                    "data_state": "LOCAL_CURRENT"
+                  }
+                },
+                {
+                  "hazard_id": "nws:synthetic-flood-warning",
+                  "hazard_type": "flood",
+                  "severity": "high",
+                  "risk_level": "HIGH_RISK",
+                  "hazard_penalty": 2500.0,
+                  "uncertainty_penalty": 0.0,
+                  "passable": true,
+                  "applies_because": "edge_geometry_intersects_hazard_geometry",
+                  "reason": "Intersects Flood Warning official alert area; does not establish physical road flooding.",
+                  "source": "NOAA/NWS",
+                  "confidence": 1.0,
+                  "timestamp": "2026-10-03T14:10:00+00:00",
+                  "freshness": "current",
+                  "evidence": {
+                    "headline": null,
+                    "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS.",
+                    "instruction": null,
+                    "areaDesc": null,
+                    "affectedZones": null,
+                    "geocode": null,
+                    "certainty": "Likely",
+                    "urgency": "Immediate",
+                    "sender": null,
+                    "senderName": null,
+                    "web": null,
+                    "references": null,
+                    "parameters": null,
+                    "response": null,
+                    "feature_url": "synthetic-flood-warning",
+                    "source_endpoint": "https://api.weather.gov/alerts/active",
+                    "official_alert_id": "synthetic-flood-warning",
+                    "event": "Flood Warning",
+                    "official_severity": "Severe",
+                    "sent": "2026-10-03T14:10:00+00:00",
+                    "effective": "2026-10-03T14:10:00+00:00",
+                    "onset": "2026-10-03T14:10:00+00:00",
+                    "expires": "2026-10-03T16:10:00+00:00",
+                    "ends": null,
+                    "fetched_at": "2026-10-03T14:10:00+00:00",
+                    "freshness": "current",
+                    "data_origin": "local",
+                    "source_status": "available",
+                    "evidence_kind": "official_alert_area",
+                    "confidence_basis": "configured source confidence; not a flood probability",
+                    "interpretation": "Alert-area intersection only; does not establish road flooding.",
+                    "freshness_policy": {
+                      "max_fetch_age_seconds": 900.0,
+                      "max_observation_age_seconds": null,
+                      "future_clock_tolerance_seconds": 120.0
+                    },
+                    "reason": "Intersects Flood Warning official alert area; does not establish physical road flooding.",
+                    "data_state": "LOCAL_CURRENT"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "reason": null
+      },
+      "safer": {
+        "exists": true,
+        "route": {
+          "total_distance_m": 1100.0,
+          "route_node_ids": [
+            1,
+            4,
+            3
+          ],
+          "route_geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -78.64,
+                35.77
+              ],
+              [
+                -78.635,
+                35.773
+              ],
+              [
+                -78.63,
+                35.77
+              ]
+            ]
+          },
+          "affected_edge_count": 0,
+          "total_risk_penalty": 0.0,
+          "hazard_ids": [],
+          "road_risks": [
+            {
+              "edge_id": {
+                "u": 1,
+                "v": 4,
+                "key": 0
+              },
+              "risk_level": "SAFE",
+              "penalty": 0.0,
+              "hazard_penalty": 0.0,
+              "uncertainty_penalty": 0.0,
+              "passable": true,
+              "reasons": [
+                "No supplied hazard intersects this road."
+              ],
+              "hazard_ids": [],
+              "confidence": null,
+              "evaluated_at": "2026-10-03T14:10:00+00:00",
+              "contributions": []
+            },
+            {
+              "edge_id": {
+                "u": 4,
+                "v": 3,
+                "key": 0
+              },
+              "risk_level": "SAFE",
+              "penalty": 0.0,
+              "hazard_penalty": 0.0,
+              "uncertainty_penalty": 0.0,
+              "passable": true,
+              "reasons": [
+                "No supplied hazard intersects this road."
+              ],
+              "hazard_ids": [],
+              "confidence": null,
+              "evaluated_at": "2026-10-03T14:10:00+00:00",
+              "contributions": []
+            }
+          ]
+        },
+        "reason": null
+      },
+      "avoided_edge_count": 1,
+      "avoided_hazard_ids": [
+        "nws:synthetic-Hurricane-Warning",
+        "nws:synthetic-Storm-Surge-Warning",
+        "nws:synthetic-excessive-heat-warning",
+        "nws:synthetic-flood-warning"
+      ],
+      "data_state": {
+        "mode": "CACHED",
+        "evaluated_at": "2026-10-03T14:10:00+00:00",
+        "snapshot_created_at": "2026-10-03T14:10:00+00:00",
+        "hazard_coverage_state": "available",
+        "sources": {
+          "flood_nws": {
+            "status": "available",
+            "fetch_freshness": "current",
+            "fetched_at": "2026-10-03T14:10:00+00:00",
+            "issues": []
+          },
+          "heat_nws": {
+            "status": "available",
+            "fetch_freshness": "current",
+            "fetched_at": "2026-10-03T14:10:00+00:00",
+            "issues": []
+          },
+          "hurricane_nws": {
+            "status": "available",
+            "fetch_freshness": "current",
+            "fetched_at": "2026-10-03T14:10:00+00:00",
+            "issues": []
+          }
+        }
+      }
+    },
+    "destination": {
+      "id": "center-a",
+      "name": "Cooling Center A",
+      "latitude": 35.77,
+      "longitude": -78.63,
+      "categories": [
+        "cooling_centre"
+      ],
+      "observed_at": "2026-10-03T14:10:00+00:00",
+      "designated_cooling_center": true,
+      "synthetic": true,
+      "source": "synthetic-government",
+      "official_evidence": {
+        "source_id": "synthetic-government",
+        "authority": "SYNTHETIC GOVERNMENT FIXTURE",
+        "source_url": "https://example.invalid/synthetic-centers",
+        "fetched_at": "2026-10-03T14:10:00+00:00",
+        "observed_at": "2026-10-03T14:10:00+00:00",
+        "expires_at": null,
+        "designated_cooling_center": true
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -78.63,
+          35.77
+        ]
+      },
+      "classification": "official_cooling_center",
+      "designation_freshness": "current",
+      "open": null,
+      "air_conditioned": null,
+      "accepting_people": null,
+      "safety_verified": false
+    }
+  }
+}
