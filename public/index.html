@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#176450"><meta name="description" content="Choose a disaster, set your location, and explore a route to a resource outside the warning area.">
+  <title>TerraWatch · Your way out</title>
+  <link rel="icon" href="/icons/logo.svg" type="image/svg+xml"><link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/vendor/leaflet.css"><link rel="stylesheet" href="/styles.css">
+  <script src="/vendor/leaflet.js" defer></script><script src="/app.js" type="module"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to evacuation planner</a>
+<header class="app-header">
+  <a class="brand" href="/" aria-label="TerraWatch home"><img src="/icons/logo.svg" width="38" height="38" alt=""><span>terra<span>watch</span><small>YOUR NEXT STEP, WITH MORE CLARITY.</small></span></a>
+  <span class="header-purpose">Personal evacuation planner</span>
+  <div class="header-actions"><label class="region-control"><span data-icon="pin"></span><span class="sr-only">Coverage area</span><select id="region"><option value="raleigh">Raleigh, NC</option><option value="wilmington">Wilmington, NC</option><option value="asheville">Asheville, NC</option></select></label><button class="text-button" id="open-data" aria-label="Data & help"><span data-icon="layers"></span><span>Data & help</span></button></div>
+</header>
+<main id="main">
+  <section class="hero"><div><div class="eyebrow"><span class="dot"></span> ONE SITUATION. YOUR NEXT STEP.</div><h1>Find your way out.</h1><p>Choose the disaster. Set your location. Explore a route beyond the warning area.</p></div><div class="mode-control" aria-label="Data mode"><button id="mode-live" aria-pressed="false">Live conditions</button><button id="mode-demo" class="selected" aria-pressed="true">Try a demo</button></div></section>
+  <div class="mode-banner" id="mode-banner" role="status">Loading your planner…</div>
+
+  <section class="journey-layout">
+    <aside class="journey-panel panel" aria-label="Set up your evacuation route">
+      <section class="journey-step"><div class="step-heading"><span class="step-number">01</span><h2>What are you facing?</h2></div>
+        <div class="hazard-picker" aria-label="Choose one disaster">
+          <button class="hazard-choice selected" data-hazard="flood" aria-pressed="true"><span data-icon="flood"></span><strong>Flood</strong></button>
+          <button class="hazard-choice" data-hazard="hurricane" aria-pressed="false"><span data-icon="hurricane"></span><strong>Hurricane</strong></button>
+          <button class="hazard-choice" data-hazard="heat" aria-pressed="false"><span data-icon="heat"></span><strong>Extreme heat</strong></button>
+        </div>
+        <p class="step-hint" id="hazard-hint">Find a way beyond the flood warning.</p>
+      </section>
+      <section class="journey-step"><div class="step-heading"><span class="step-number" id="location-step-number">02</span><h2>Where are you starting?</h2></div>
+        <div class="location-card" id="location-card"><span class="location-dot"></span><div><strong id="location-title">Your location is not set</strong><span id="location-coordinates">Use GPS or choose a point on the map.</span></div></div>
+        <button class="button primary wide" id="use-location"><span data-icon="locate"></span> Use my location</button>
+        <div class="location-tools"><button class="text-button" id="pick-location"><span data-icon="pin"></span> Choose on map</button><button class="text-button" id="use-demo-location"><span data-icon="flask"></span> Use example location</button></div>
+        <details class="manual-location"><summary>Enter coordinates</summary><form id="coordinate-form"><div class="coordinate-fields"><label>Latitude<input id="origin-lat" type="number" step="any" min="-90" max="90" required></label><label>Longitude<input id="origin-lon" type="number" step="any" min="-180" max="180" required></label></div><button class="button secondary wide" type="submit">Set starting point</button></form></details>
+        <p class="location-status" id="location-status" aria-live="polite">Your precise location is only used when you choose it.</p>
+      </section>
+      <section class="journey-step destination-step"><div class="step-heading"><span class="step-number">03</span><h2>Find a place outside</h2></div>
+        <p class="step-hint">We’ll compare routes to nearby mapped resources outside known warning areas.</p>
+        <label class="destination-label" for="destination">Destination</label><select id="destination"><option value="">Suggest a nearby resource</option></select>
+        <button class="button primary wide find-button" id="find-route" disabled>Find my exit route <span data-icon="arrow"></span></button>
+        <p class="small-note">Driving routes · opening and shelter status need confirmation.</p>
+        <p id="planner-error" class="form-error" role="alert"></p>
+      </section>
+      <div class="official-note"><span data-icon="shield"></span><p>Follow official evacuation directions. <a id="safety-link" href="https://www.weather.gov/safety/flood-during" target="_blank" rel="noopener noreferrer">Read flood guidance ↗</a></p></div>
+    </aside>
+
+    <div class="map-column">
+      <section class="map-panel panel"><div class="map-toolbar"><div class="map-title"><span data-icon="map"></span><strong id="map-title">Your flood exit plan</strong><span id="map-region">Raleigh</span></div><button class="text-button" id="refresh"><span data-icon="refresh"></span> Refresh conditions</button></div>
+        <div class="map-wrap"><div id="map" aria-label="Selected disaster and personal evacuation route map"></div><div class="map-instruction" id="map-instruction" hidden>Choose your starting point on the map. Esc to cancel.</div><div class="map-prompt" id="map-prompt"><span data-icon="pin"></span><strong>Your route starts with you.</strong><p>Set your location to see whether it is inside the selected warning area.</p></div><div class="map-watermark" id="map-watermark">FICTIONAL DEMO</div><div class="map-key"><span><i class="legend-hazard" id="legend-hazard"></i><span id="legend-label">Flood warning</span></span><span><i class="legend-origin"></i>Your location</span><span><i class="legend-route"></i>Your route</span><span id="demo-road-key"><i class="legend-demo-road"></i>Simulated dry roads <i class="legend-demo-water"></i>Flooded</span></div><div class="comparison-map-key" id="comparison-key" hidden><span><i class="legend-shortest"></i>Shortest · comparison only</span><span><i class="legend-excluded"></i>Excluded by checks</span></div><div class="map-detail" id="map-detail" hidden></div></div>
+        <div class="map-footer"><span id="map-status">Loading conditions…</span><div><button class="text-button" id="reset-map">Reset view</button><button class="text-button" id="save-offline"><span data-icon="download"></span> Save offline</button></div></div>
+      </section>
+      <section id="route-result" class="route-result panel" aria-live="polite"><div class="result-empty"><span class="icon-box" data-icon="route"></span><div><h2>A route that starts where you are.</h2><p>Your destination and route will appear here after you set your location.</p></div></div></section>
+    </div>
+  </section>
+
+  <section class="support-row"><div><span data-icon="volume"></span><div><h2>Need this explained?</h2><p>Read or listen to guidance for the disaster you selected.</p></div><button class="button secondary" id="open-guidance">My guidance <span data-icon="arrow"></span></button></div><div><span data-icon="alert"></span><div><h2>See a blocked road?</h2><p>Add an observation for the route checks.</p></div><button class="button secondary" id="open-report">Report hazard <span data-icon="plus"></span></button></div></section>
+  <footer class="app-footer"><span>Planning prototype · Routes and destinations are unverified.</span><span>In an emergency, <a href="tel:911">call 911</a>.</span><button class="text-button" id="methodology">How routes are checked <span data-icon="arrow"></span></button></footer>
+</main>
+
+<dialog id="guidance-dialog" class="wide-dialog" aria-labelledby="guidance-title"><div class="dialog-heading"><div><span class="eyebrow">YOUR SELECTED DISASTER</span><h2 id="guidance-title">Flood guidance</h2></div><button class="icon-button close-dialog" aria-label="Close guidance">×</button></div><p class="muted">Based on the displayed warnings. Follow local emergency instructions.</p><div id="guidance-content" class="brief-content">Generate a short explanation of the available information.</div><div class="guidance-actions"><button class="button primary" id="generate-brief"><span data-icon="sparkles"></span> Explain my situation</button><button class="button secondary" id="play-brief" disabled><span data-icon="volume"></span> Listen</button><button class="text-button" id="download-brief" hidden>Save text</button></div><audio id="brief-audio" controls hidden></audio></dialog>
+<dialog id="report-dialog" aria-labelledby="report-title"><form id="report-form"><div class="dialog-heading"><div><span class="eyebrow">LOCAL OBSERVATION</span><h2 id="report-title">Report a hazard</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close report">×</button></div><p class="muted">Reports stay in this app, remain unverified, and expire after 6 hours. They are not sent to emergency services.</p><label>What are you seeing?<select id="report-kind"><option value="flooded_road">Flooded road</option><option value="fallen_tree">Fallen tree</option><option value="blocked_road">Blocked road</option><option value="heat_concern">Heat concern</option></select></label><button type="button" class="text-button" id="pick-report-location"><span data-icon="pin"></span> Choose report location on map</button><div class="coordinate-fields"><label>Latitude<input id="report-lat" type="number" step="any" required min="-90" max="90"></label><label>Longitude<input id="report-lon" type="number" step="any" required min="-180" max="180"></label></div><label>Observation<textarea id="report-description" rows="4" minlength="5" maxlength="600" required placeholder="Describe what you observed. Avoid personal information."></textarea></label><p id="report-error" class="form-error" role="alert"></p><div class="dialog-actions"><span id="report-mode" class="tag">DEMO REPORT</span><button type="submit" class="button primary">Submit observation</button></div></form></dialog>
+<dialog id="info-dialog" class="wide-dialog" aria-labelledby="info-title"><div class="dialog-heading"><div><span class="eyebrow">THE INFORMATION BEHIND YOUR ROUTE</span><h2 id="info-title">Data & help</h2></div><button class="icon-button close-dialog" aria-label="Close information">×</button></div><div id="info-content"></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+</body></html>

@@ -1,1 +1,113 @@
-# Wolfhacks_2026
+# TerraWatch
+
+A working North Carolina disaster-planning application for **hurricanes, floods, and heat waves**, built for the Center for Geospatial Analytics track.
+
+Choose **one disaster**, set your starting location, and get **suggested nearby resources with road routes beyond the warning area**. The main screen is a personal evacuation planner. Provider details and supporting sensor readings live in Data & help. The demo uses **real OpenStreetMap streets and resource locations with simulated disaster conditions**; live mode uses actual public warning feeds.
+
+Try it: **Flood → Use example location → Find my exit route**. The example starts inside a simulated warning and compares real road routes to mapped resources. **Why this route?** compares the chosen road route with the shortest road route to the same destination, showing distance, warning exposure, and excluded segments. Toggle the shortest route on the map for comparison. Switch to Hurricane or Extreme heat to try an independent scenario. Actual GPS is used only after choosing Use my location; the app never substitutes a city center for your location.
+
+## Run locally
+
+**Requirement: Node.js 24 or newer.** No Python, frontend build, database service, or API key is required for the core app.
+
+```sh
+node --env-file-if-exists=.env server.mjs
+```
+
+Open **http://127.0.0.1:4173**. On Windows you can also run `./start.ps1`. With npm installed, `npm start` is equivalent.
+
+The first load downloads OSM roads and resources and may take 15–65 seconds. The server caches provider responses in `data/terrawatch.sqlite`. Coverage presets: **Raleigh, Wilmington, Asheville**. If OSM is unavailable with no cached graph, the demo falls back to a visibly labeled fictional grid. Set `DEMO_ROADS=synthetic` for an entirely fictional, network-free walkthrough. Live data never falls back to invented roads or warnings.
+
+For optional integrations, copy `.env.example` to `.env`, fill only the settings you need, and restart. Never place keys in `public/` or commit `.env`.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+## Implemented workflows
+
+- Interactive **Leaflet map** focused on one selected disaster, your origin, and suggested destinations. Switching disasters clears the previous route; changing city or mode clears the origin too.
+- **NOAA/NWS** alerts and station observations. Expired and test alerts are excluded. Missing polygons can be resolved from official affected zones; missing areas stay explicitly unavailable.
+- **USGS** gage-height observations and historical trends. The server polls every 60 seconds and uses **Server-Sent Events** to update the browser. Observations retain their actual sensor timestamps; polling does not fabricate new observations.
+- **OpenStreetMap / Overpass** roads and facilities, including hospitals, clinics, libraries, community facilities, and fire stations. No facility is declared an open shelter or cooling center without verification.
+- **Census ACS** optional county population context with margin of error and vintage. A county total is never displayed as the number exposed to a hazard.
+- **Destination suggestions** compare eligible resources outside checked warnings and return up to three reachable alternatives ranked by road distance × warning-exposure costs. You can also choose a specific resource.
+- **Shortest-route comparison** uses the same start and destination road access points and retains one-way driving restrictions. It removes hazard restrictions only for an explanatory baseline. Excluded sections appear red when the comparison overlay is enabled. The baseline cannot be selected or exported as the suggested route. Identical results are disclosed rather than claiming an improvement.
+- **Risk-weighted graph routing** with one-way roads, exclusions for major flood-warning footprints, and higher costs for wind and heat exposure. Live plans also check other known warnings, while the map remains focused on the selected disaster. Reports create temporary local exclusions. Routes cannot re-enter the selected warning after exiting. This is a planning prototype, not evacuation navigation.
+- Clear results for **no warning, no usable exit, no outside destination, missing boundaries, and stale data**. An origin outside the warning gets a resource-access route without implying a need to evacuate. Demo flood exits have an explicitly fictional dry corridor that is never permitted for live data.
+- **Local hazard reports** with validated coordinates, explicit unverified status, six-hour expiry, and isolated demo/live storage.
+- **Offline packs** in IndexedDB plus a service worker: saved vector road graph, resources, conditions, and browser-side route calculation. Live offline routing requires a complete warning snapshot less than 30 minutes old. Background map tiles are not bulk downloaded.
+- **Gemini** source-grounded briefings, **ElevenLabs** audio, a transparent local briefing template when no Gemini key is provided, and an explicitly labeled browser voice when ElevenLabs is not configured.
+- Selected-map and route GeoJSON downloads, plus briefing text downloads.
+
+## Project structure
+
+```text
+server.mjs             HTTP API, validation, SSE, static app, request limits
+lib/
+  config.mjs           Region presets and polling interval
+  providers.mjs        NOAA, USGS, Overpass and Census connectors
+  store.mjs            SQLite cache, reports, time series and sink delivery log
+  model.mjs            Normalization, exposure and action priorities
+  geo.mjs              Geometry predicates, intersections and distance
+  routing.mjs          OSM graph builder and risk-weighted Dijkstra search
+  evacuation.mjs       Selected-disaster planning, candidate ranking and data gates
+  service.mjs          Source orchestration and snapshots
+  integrations.mjs     Gemini, ElevenLabs, Tiger and optional ingest bridge
+  demo.mjs             Explicitly fictional, region-specific scenarios
+public/
+  index.html           Accessible application interface
+  styles.css           Responsive desktop and mobile layout
+  app.js               Map and application workflows
+  offline.js           IndexedDB packs
+  sw.js                Offline application shell
+  vendor/              Local Leaflet 1.9.4 assets and license
+sql/tiger.sql          Time-series hypertable and continuous aggregate
+tests/                 Geometry, routing, provenance and HTTP tests
+scripts/check-live.mjs Real provider smoke check
+docs/                  Architecture, API, bonus setup and demo walkthrough
+```
+
+The supplied architecture is implemented in layers, using the existing **Node.js starter** rather than introducing a separate Python service. GeoJSON is the exchange format; the graph algorithm and geometric operations run in JavaScript and are shared with the offline browser. SQLite is built into Node 24. There is no uncalibrated ML prediction of disaster occurrence.
+
+## Test
+
+```sh
+node --test tests/*.test.mjs
+node scripts/check-live.mjs
+```
+
+Unit/API tests use an isolated temporary SQLite database and a local child server, with no paid API calls. The live smoke test requires the app server and network access. Provider downtime is reported, not replaced with simulated data.
+
+## Bonus configuration
+
+| Challenge | Implemented use | What you supply |
+| --- | --- | --- |
+| Gemini API | Evidence-grounded situation briefs | `GEMINI_API_KEY`, optional `GEMINI_MODEL` |
+| ElevenLabs | Spoken brief from the generated text | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` |
+| Tiger Data | Persist real observations to a hypertable; hourly continuous aggregate | `npm install`, `TIGER_DATABASE_URL` for a Tiger service |
+| Applied AI streaming | Real-time interface around genuine USGS sensor observations | No key for local public sensor interface; cloud deployment still needed for a hosted dashboard |
+| Databricks extension | Retryable observation batches to your ingestion bridge | A deployed HTTPS ingestion service, URL and token |
+
+See [integration setup](docs/INTEGRATIONS.md). Bonus eligibility is determined by the organizers. No cloud deployment, paid service account, domain registration, or prize opt-in is performed automatically. Solana is intentionally omitted because this workflow does not need blockchain transactions.
+
+## Deploy
+
+Use the included Dockerfile on a container host with **HTTPS, persistent disk mounted at `/app/data`, and SSE support**. Keep one instance for SQLite. Example:
+
+```sh
+docker build -t terrawatch .
+docker run --env-file .env -e HOST=0.0.0.0 -p 4173:4173 -v terrawatch-data:/app/data terrawatch
+```
+
+Keys go in host secrets/environment variables. Configure a reverse proxy to preserve `Host`, disable buffering for `/api/stream`, and allow its long-lived connections. For an Internet-facing instance, add authentication and report moderation before enabling write/paid endpoints for users. The default server binds to localhost and does not authenticate users; request throttling alone is not access control.
+
+## Scope and limitations
+
+This is an implemented hackathon prototype. It does **not** certify safe roads, produce evacuation orders, validate shelter capacity/opening, model water depth, use elevation to predict inundation, or apply turn restrictions, vehicle dimensions, live traffic, or official road-closure feeds. Broad warning areas are conservative route exclusions, not observed flooding. A null/empty alert feed does not establish safety.
+
+Current data connectors use NOAA/NWS, USGS, OSM/Overpass, and optionally Census. NC OneMap elevation, Census TIGER tract boundaries, EPA, NHC forecast cones, and separate DOT closure feeds are future data layers; they are not silently represented as implemented. Data.gov is a catalog rather than one uniform data API. Only APIs needed by the working workflows are queried.
+
+Reports remain local to this server and are not sent to emergency services. Exact user GPS locations are used only on request for local route planning. AI does not select routes or change risk calculations. See [architecture and methods](docs/ARCHITECTURE.md), [API reference](docs/API.md), and [demo script](docs/DEMO.md).
+
+Sources: [NWS API](https://www.weather.gov/documentation/services-web-api), [USGS modernization](https://api.waterdata.usgs.gov/docs/ogcapi/migration/), [Overpass QL](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL), [Census ACS API](https://api.census.gov/data/2024/acs/acs5/examples.html), [Leaflet](https://leafletjs.com/). OSM data and map attribution remain visible. Leaflet's license is included in `public/vendor/LEAFLET-LICENSE`.

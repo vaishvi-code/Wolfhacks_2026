@@ -1,0 +1,3 @@
+const dbPromise=new Promise((resolve,reject)=>{const r=indexedDB.open('terrawatch',1);r.onupgradeneeded=()=>r.result.createObjectStore('packs');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+export async function savePack(pack){const db=await dbPromise;return new Promise((resolve,reject)=>{const tx=db.transaction('packs','readwrite');tx.objectStore('packs').put(pack,`${pack.region.id}:${pack.mode}`);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
+export async function loadPack(region,mode){const db=await dbPromise;return new Promise((resolve,reject)=>{const r=db.transaction('packs').objectStore('packs').get(`${region}:${mode}`);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
