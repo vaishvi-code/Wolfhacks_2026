@@ -20,6 +20,8 @@ The first load downloads OSM roads and resources and may take 15–65 seconds. T
 
 For optional integrations, copy `.env.example` to `.env`, fill only the settings you need, and restart. Never place keys in `public/` or commit `.env`.
 
+Follow [API setup](docs/INTEGRATIONS.md) for provider account links and exact settings. Run `node --env-file-if-exists=.env scripts/check-apis.mjs` to verify credentials and identify missing configuration without generating text/audio or writing to a database.
+
 ```powershell
 Copy-Item .env.example .env
 ```
@@ -37,7 +39,7 @@ Copy-Item .env.example .env
 - Clear results for **no warning, no usable exit, no outside destination, missing boundaries, and stale data**. An origin outside the warning gets a resource-access route without implying a need to evacuate. Demo flood exits have an explicitly fictional dry corridor that is never permitted for live data.
 - **Local hazard reports** with validated coordinates, explicit unverified status, six-hour expiry, and isolated demo/live storage.
 - **Offline packs** in IndexedDB plus a service worker: saved vector road graph, resources, conditions, and browser-side route calculation. Live offline routing requires a complete warning snapshot less than 30 minutes old. Background map tiles are not bulk downloaded.
-- **Gemini** source-grounded briefings, **ElevenLabs** audio, a transparent local briefing template when no Gemini key is provided, and an explicitly labeled browser voice when ElevenLabs is not configured.
+- **Gemini** briefings and warning questions in English or Spanish; **ElevenLabs** narrator selection and audio; slower playback; optional record → transcribe → review → ask workflow with ElevenLabs Scribe. Provider outages use clearly labeled fallbacks. Audio recording requires browser microphone permission and only uploads when the person selects Transcribe.
 - Selected-map and route GeoJSON downloads, plus briefing text downloads.
 
 ## Project structure
@@ -54,6 +56,7 @@ lib/
   evacuation.mjs       Selected-disaster planning, candidate ranking and data gates
   service.mjs          Source orchestration and snapshots
   integrations.mjs     Gemini, ElevenLabs, Tiger and optional ingest bridge
+  voice.mjs            Voice allowlist, bounded transcription, guidance options
   demo.mjs             Explicitly fictional, region-specific scenarios
 public/
   index.html           Accessible application interface
@@ -84,7 +87,7 @@ Unit/API tests use an isolated temporary SQLite database and a local child serve
 | Challenge | Implemented use | What you supply |
 | --- | --- | --- |
 | Gemini API | Evidence-grounded situation briefs | `GEMINI_API_KEY`, optional `GEMINI_MODEL` |
-| ElevenLabs | Spoken brief from the generated text | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` |
+| ElevenLabs | Narration, stock voice selection, question transcription | `ELEVENLABS_API_KEY`, optional default `ELEVENLABS_VOICE_ID` |
 | Tiger Data | Persist real observations to a hypertable; hourly continuous aggregate | `npm install`, `TIGER_DATABASE_URL` for a Tiger service |
 | Applied AI streaming | Real-time interface around genuine USGS sensor observations | No key for local public sensor interface; cloud deployment still needed for a hosted dashboard |
 | Databricks extension | Retryable observation batches to your ingestion bridge | A deployed HTTPS ingestion service, URL and token |

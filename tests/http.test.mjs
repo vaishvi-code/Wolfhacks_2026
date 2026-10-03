@@ -27,3 +27,19 @@ test('personal evacuation validates user choices and serves shared offline logic
 test('personal briefing only explains the selected demo disaster',async()=>{const response=await post('/api/brief',{mode:'demo',hazard:'flood'});const b=await response.json();assert.equal(response.status,200);assert.match(b.text,/flood guidance/);assert.ok(!b.text.includes('Tropical storm warning'));assert.ok(!b.text.includes('Extreme heat warning'));});
 
 test('custom flood coordinates route through the API without the example-location button',async()=>{const r=await post('/api/evacuate',{mode:'demo',region:'raleigh',hazard:'flood',start:[-78.62016,35.79015],destinationId:'demo-raleigh-f6'});assert.equal(r.status,200);const p=await r.json();assert.equal(p.status,'routes_found');assert.equal(p.originInside,true);assert.equal(p.alternatives[0].destination.id,'demo-raleigh-f6');assert.ok(p.alternatives[0].snapDistances.start<.01);const s=await(await fetch(base+'/api/snapshot?mode=demo')).json();assert.equal(s.demoRouting.version,2);assert.equal(s.demoRouting.floodedAreas.features.length,2);});
+
+test('guidance validates language and questions and honestly labels translation fallback',async()=>{
+  assert.equal((await post('/api/brief',{mode:'demo',language:'bogus'})).status,400);
+  assert.equal((await post('/api/brief',{mode:'demo',question:'x'.repeat(601)})).status,400);
+  const result=await(await post('/api/brief',{mode:'demo',hazard:'flood',language:'es',question:'What is missing?'})).json();
+  assert.equal(result.language,'en');assert.match(result.notice,/does not answer/);
+});
+test('audio uploads preserve origin checks and reject invalid, oversized and unconfigured input',async()=>{
+  const upload=(body,headers={})=>fetch(base+'/api/transcribe',{method:'POST',headers:{'Content-Type':'audio/webm',...headers},body});
+  assert.equal((await upload('audio',{Origin:'https://evil.example'})).status,403);
+  assert.equal((await upload('audio',{'Content-Type':'text/html'})).status,415);
+  assert.equal((await upload(new Uint8Array(2*1024*1024+1))).status,413);
+  assert.equal((await upload('')).status,413);assert.equal((await upload('audio')).status,503);
+  assert.equal((await post('/api/voices',{})).status,503);
+  assert.equal((await fetch(base+'/guidance.js')).status,200);
+});

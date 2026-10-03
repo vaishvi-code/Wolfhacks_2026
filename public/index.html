@@ -59,7 +59,29 @@
   <footer class="app-footer"><span>Planning prototype · Routes and destinations are unverified.</span><span>In an emergency, <a href="tel:911">call 911</a>.</span><button class="text-button" id="methodology">How routes are checked <span data-icon="arrow"></span></button></footer>
 </main>
 
-<dialog id="guidance-dialog" class="wide-dialog" aria-labelledby="guidance-title"><div class="dialog-heading"><div><span class="eyebrow">YOUR SELECTED DISASTER</span><h2 id="guidance-title">Flood guidance</h2></div><button class="icon-button close-dialog" aria-label="Close guidance">×</button></div><p class="muted">Based on the displayed warnings. Follow local emergency instructions.</p><div id="guidance-content" class="brief-content">Generate a short explanation of the available information.</div><div class="guidance-actions"><button class="button primary" id="generate-brief"><span data-icon="sparkles"></span> Explain my situation</button><button class="button secondary" id="play-brief" disabled><span data-icon="volume"></span> Listen</button><button class="text-button" id="download-brief" hidden>Save text</button></div><audio id="brief-audio" controls hidden></audio></dialog>
+<dialog id="guidance-dialog" class="wide-dialog" aria-labelledby="guidance-title">
+  <div class="dialog-heading"><div><span class="eyebrow">YOUR SELECTED DISASTER</span><h2 id="guidance-title">Flood guidance</h2></div><button class="icon-button close-dialog" aria-label="Close guidance">×</button></div>
+  <p class="muted">Understand the displayed warnings in your language. Follow local emergency instructions.</p>
+  <div class="guidance-settings">
+    <label>Guidance language<select id="guidance-language"><option value="en">English</option><option value="es">Español</option></select></label>
+    <label>Narrator<select id="guidance-voice" disabled><option value="">Default voice</option></select></label>
+    <label>Playback speed<select id="guidance-speed"><option value="1">Normal</option><option value="0.85">Slower · 0.85×</option></select></label>
+  </div>
+  <p id="voice-status" class="guidance-hint" role="status">Choose a language for the explanation and narration.</p>
+  <div class="guidance-actions"><button class="button primary" id="generate-brief"><span data-icon="sparkles"></span> Explain my situation</button><button class="button secondary" id="play-brief" disabled><span data-icon="volume"></span> Listen</button><button class="text-button" id="download-brief" hidden>Save text</button></div>
+  <div id="guidance-content" class="brief-content" aria-live="polite">Generate a short explanation of the available information.</div>
+  <audio id="brief-audio" controls hidden aria-label="Spoken guidance"></audio>
+  <details class="guidance-question-panel"><summary>Ask about this warning</summary>
+    <p class="guidance-hint">Type a question or record one. Answers use the selected warning information; they cannot confirm road safety or shelter opening.</p>
+    <label for="guidance-question">Your question</label><textarea id="guidance-question" rows="3" maxlength="600" placeholder="What does this warning mean? What information is missing?"></textarea>
+    <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Record a question</button><button class="text-button" id="discard-recording" disabled>Discard recording</button></div>
+    <p id="recording-status" class="guidance-hint" role="status">Record up to 30 seconds, or type your question.</p>
+    <audio id="recording-preview" controls hidden aria-label="Your recorded question"></audio>
+    <button class="button secondary" id="transcribe-question" disabled>Transcribe recording</button>
+    <p class="guidance-hint">Transcribe sends audio to ElevenLabs. Ask sends the reviewed question and warning information to Gemini. Provider retention policies apply. Avoid personal details; your question is not sent to emergency services.</p>
+    <button class="button primary" id="ask-guidance" disabled>Ask about this warning</button>
+  </details>
+</dialog>
 <dialog id="report-dialog" aria-labelledby="report-title"><form id="report-form"><div class="dialog-heading"><div><span class="eyebrow">LOCAL OBSERVATION</span><h2 id="report-title">Report a hazard</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close report">×</button></div><p class="muted">Reports stay in this app, remain unverified, and expire after 6 hours. They are not sent to emergency services.</p><label>What are you seeing?<select id="report-kind"><option value="flooded_road">Flooded road</option><option value="fallen_tree">Fallen tree</option><option value="blocked_road">Blocked road</option><option value="heat_concern">Heat concern</option></select></label><button type="button" class="text-button" id="pick-report-location"><span data-icon="pin"></span> Choose report location on map</button><div class="coordinate-fields"><label>Latitude<input id="report-lat" type="number" step="any" required min="-90" max="90"></label><label>Longitude<input id="report-lon" type="number" step="any" required min="-180" max="180"></label></div><label>Observation<textarea id="report-description" rows="4" minlength="5" maxlength="600" required placeholder="Describe what you observed. Avoid personal information."></textarea></label><p id="report-error" class="form-error" role="alert"></p><div class="dialog-actions"><span id="report-mode" class="tag">DEMO REPORT</span><button type="submit" class="button primary">Submit observation</button></div></form></dialog>
 <dialog id="info-dialog" class="wide-dialog" aria-labelledby="info-title"><div class="dialog-heading"><div><span class="eyebrow">THE INFORMATION BEHIND YOUR ROUTE</span><h2 id="info-title">Data & help</h2></div><button class="icon-button close-dialog" aria-label="Close information">×</button></div><div id="info-content"></div></dialog>
 <div class="toast" id="toast" role="status" hidden></div>

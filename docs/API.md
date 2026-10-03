@@ -15,6 +15,8 @@ Default origin: `http://127.0.0.1:4173`. JSON writes require `Content-Type: appl
 | POST | `/api/evacuate` | Personal evacuation result with up to three ranked destination/route alternatives |
 | POST | `/api/brief` | Gemini or local template brief with server-issued ID |
 | POST | `/api/audio` | ElevenLabs MP3 for a generated brief ID |
+| POST | `/api/voices` | Stock narrator IDs and names; JSON body `{}`; cached for five minutes |
+| POST | `/api/transcribe?language=en` | Raw audio body → ElevenLabs transcript for user review |
 
 Refresh/brief body:
 
@@ -64,6 +66,8 @@ Live routing requires successful NWS data within 15 minutes and OSM data within 
 
 Send `"hazard":"flood"` (or another supported category) to `/api/brief` for selected-disaster guidance. The summary does not receive the user's precise starting coordinates.
 
+Briefing also accepts `"language":"en"` or `"es"` (default English) and an optional `"question"` of at most 600 characters. The question and selected warning evidence go to Gemini. The response includes `language` for the actual output; a fallback is explicitly labeled English and does not claim to answer the question.
+
 Legacy point-to-resource route body:
 
 ```json
@@ -80,9 +84,13 @@ The legacy `/api/route` endpoint uses all hazards and is not used by the persona
 Audio body:
 
 ```json
-{"region":"raleigh","mode":"demo","briefId":"ID_FROM_BRIEF_RESPONSE"}
+{"region":"raleigh","mode":"demo","briefId":"ID_FROM_BRIEF_RESPONSE","voiceId":"ID_FROM_VOICES_RESPONSE"}
 ```
 
 No arbitrary speech text is accepted. Brief IDs expire after an hour; audio requires configured ElevenLabs credentials. Optional-provider failures never fabricate output. Briefing may return a source template with the error explained in `notice`.
 
-Errors use `{"error":"Readable explanation"}`. Writes are limited per client address and endpoint per minute (reports 8, briefing/audio 6, other writes 30). This is a local abuse guard, not a replacement for authentication.
+The narrator must be returned by `/api/voices` or match the server's configured default. Omit `voiceId` to use `ELEVENLABS_VOICE_ID` when set. Stock voice names are public metadata; private samples and other account fields are not returned.
+
+Transcription is the only non-JSON write: send raw bytes with `Content-Type: audio/webm`, `audio/ogg`, `audio/mp4`, `audio/wav`, or `audio/mpeg`. Bodies over 2 MB return HTTP 413; unsupported formats return 415. The UI limits recordings to 30 seconds. Language is `en` or `es`. The response is `{text, provider, language, truncated}`; text is limited to 600 characters. Recording and transcript are not written to the app database. Transcription does not call Gemini or change a route: users review text and explicitly submit a subsequent brief/question request.
+
+Errors use `{"error":"Readable explanation"}`. Writes are limited per client address and endpoint per minute (reports 8, briefing/audio/transcription/voice listing 6, other writes 30). This is a local abuse guard, not a replacement for authentication.

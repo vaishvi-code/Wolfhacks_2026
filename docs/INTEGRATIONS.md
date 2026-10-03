@@ -2,6 +2,27 @@
 
 Core NOAA/NWS, USGS, and Overpass calls work without your own keys. Optional integrations remain visibly unconfigured until credentials are supplied. Keys are read from the server environment and never returned to the browser.
 
+## Local setup sequence
+
+The local `.env` file is ignored by Git. If you are setting up a fresh checkout, copy `.env.example` to `.env` once; do not overwrite an existing file containing keys. Add the value after each `=` and save. Use quotes around connection strings or other values containing `#` or spaces. Keep API keys in `.env`, not `.env.example`.
+
+| Service | Open this page | Settings in `.env` |
+| --- | --- | --- |
+| Gemini | [Google AI Studio API keys](https://aistudio.google.com/apikey) | `GEMINI_API_KEY`, `GEMINI_MODEL` |
+| ElevenLabs | [ElevenLabs API keys](https://elevenlabs.io/app/settings/api-keys) | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` |
+| Tiger Data | [Tiger Cloud console](https://console.cloud.timescale.com/) | `TIGER_DATABASE_URL` |
+| Census | [Request a Census key](https://api.census.gov/data/key_signup.html) | `CENSUS_API_KEY` |
+
+Sign in to each provider yourself and review its terms, access permissions, quotas, and any plan charges shown before completing setup. After saving settings, run this from the project folder:
+
+```powershell
+node --env-file-if-exists=.env scripts/check-apis.mjs
+```
+
+With npm available, `npm run check:apis` does the same thing. The checker reads real metadata and database state without generating text/audio, sending ingest batches, or changing the database. It never prints credentials or raw provider error bodies. `verified-access` confirms only the tested metadata/database access; it does not claim generation quota, speech permission, or live sensor delivery was tested. `needs-key` and `needs-setting` identify remaining setup. Exit codes are 0 for passed applicable checks, 1 for failed checks, and 2 for incomplete setup.
+
+Restart the app after changing `.env`; the running server does not automatically reload secrets. Then exercise **My guidance → Explain my situation → Listen** to test Gemini and ElevenLabs. Those deliberate generation calls may consume provider credits. For Tiger Data, use **Live conditions → Data & help** and verify stored USGS records with the SQL query below.
+
 ## Gemini API
 
 1. Create a key in [Google AI Studio](https://aistudio.google.com/apikey).
@@ -14,18 +35,28 @@ The server calls the [GenerateContent REST API](https://ai.google.dev/api/genera
 ## ElevenLabs
 
 1. Create a key in your [ElevenLabs account](https://elevenlabs.io/app/settings/api-keys).
-2. Choose a voice ID you are authorized to use. Set `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` in `.env`.
-3. Restart, generate a brief, then click **Listen**. A configured ElevenLabs service supplies the audio.
+2. Set `ELEVENLABS_API_KEY` in `.env`. Optionally set `ELEVENLABS_VOICE_ID` to an authorized default voice; otherwise choose a stock narrator in **My guidance**.
+3. Restart, select English or Spanish and a narrator, generate a brief, then click **Listen**. A configured ElevenLabs service supplies the audio. Slower playback uses the browser's playback speed control without generating another clip.
 
 The server calls the [text-to-speech endpoint](https://elevenlabs.io/docs/api-reference/text-to-speech/convert) with `eleven_multilingual_v2`, returning MP3 audio. It only accepts IDs of server-generated briefs. No-key playback uses the browser voice and is identified by the browser-voice playback notice; that fallback does not count as an ElevenLabs integration for judging. Cloud generation may use account credits; there are no background generation calls.
+
+When restricting the key, allow **Text to Speech: Access**, **Speech to Text: Access**, and **Voices: Read**. Leave all other endpoints at No Access, retain automatic disabling for leaked keys, and choose an expiry that lasts through your demo. Set a credit limit appropriate to your provider plan. Copy a default voice's ID, not its display name or web address. The checker uses voice metadata only; a successful lookup alone does not prove speech-generation or transcription permission.
+
+**Questions and languages:** Gemini generates the English or Spanish text; ElevenLabs narrates it with `eleven_multilingual_v2`. The voice selector lists stock voices from [GET /v2/voices](https://elevenlabs.io/docs/api-reference/voices/search), with a five-minute server cache. It does not create or clone voices. If Gemini is unavailable, the app explicitly labels the English template and explains that it does not answer the submitted question.
+
+In **My guidance → Ask about this warning**, type a question or record up to 30 seconds. Recording stays in browser memory until **Transcribe recording** uploads it to ElevenLabs [Scribe v2](https://elevenlabs.io/docs/api-reference/speech-to-text/convert). Review/edit the transcript before **Ask about this warning** sends the question and selected warning evidence to Gemini. The app does not write recordings or transcripts to its database; provider retention policies still apply. Closing the dialog stops the microphone and discards its recording. The server accepts at most 2 MB of WebM, Ogg, MP4, WAV or MP3 audio and rate-limits transcription. Questions are limited to 600 characters. AI receives no calculated route and cannot certify road safety or shelter availability.
+
+These controls do not require ElevenAgents, Dubbing, Models, Voice Generation, or workspace administration permissions. Microphone recording requires HTTPS or localhost and browser support; typed questions remain available when recording is unsupported. Speech to Text and Text to Speech consume provider credits only when explicitly requested.
 
 ## Tiger Data
 
 1. Create a Tiger Cloud service and obtain its secure PostgreSQL connection string.
 2. Run `npm install` to install the optional `pg` driver.
-3. Set `TIGER_DATABASE_URL` to the TLS-enabled connection string from the service dashboard. Do not disable certificate verification to work around a configuration error.
+3. Set `TIGER_DATABASE_URL` to the TLS-enabled connection string from the service dashboard. For Tiger's **Shared Free** service, append `sslmode=no-verify`: the free service uses a self-signed certificate and does not provide a CA certificate. This keeps traffic encrypted but does not verify the server identity. Use `sslmode=verify-full` or `sslmode=verify-ca` after moving to a service with a signed certificate and configured CA chain. Do not use `ssl=false`.
 4. Restart. The server applies `sql/tiger.sql`: an observation hypertable, an hourly continuous aggregate, and a five-minute aggregate refresh policy.
 5. Open live data. Genuine USGS observations are written to `sensor_readings`, keyed by station/time. Demo observations never enter this stream.
+
+Use the **database password**, not the Tiger website password. Include it in the PostgreSQL URL if the console leaves a password placeholder. For Shared Free, retain `sslmode=no-verify`; for a signed service, use `sslmode=verify-full` or `sslmode=verify-ca` with the provider CA. Never use `ssl=false`. The app initializes its own tables and aggregate in the selected database, so use a service/database intended for this project. See [finding connection details](https://docs.tigerdata.com/use-timescale/latest/integrations/find-connection-details/).
 
 Verification query in the Tiger SQL editor:
 
@@ -65,6 +96,14 @@ Your bridge must authenticate the caller, validate this schema, durably enqueue 
 ## Census ACS
 
 Set `CENSUS_API_KEY` to enable county context. The [Census examples](https://api.census.gov/data/2024/acs/acs5/examples.html) currently require API keys. Queries use `B01003_001E` (total population) and `B01003_001M` (margin of error) from the 2024 five-year ACS. No affected-population estimate is inferred from whole-county totals.
+
+Request the key from the [official signup form](https://api.census.gov/data/key_signup.html), then follow the activation instructions sent by Census before testing it.
+
+Controlled county population estimates can carry the special margin-of-error code `-555555555`. The app keeps the valid population, stores `marginOfError: null`, and labels it `controlled`, rather than rejecting it or reporting a negative/zero error. Suppressed population counts remain unavailable. See the [Census annotation definitions](https://www.census.gov/data/developers/data-sets/acs-1year/notes-on-acs-estimate-and-annotation-values.html).
+
+## Other track datasets and prize tools
+
+NC OneMap, TIGER/Line, EPA, and Data.gov are not additional enabled connectors in this application; they need a specific feature and adapter before they can be used. Data.gov is a dataset catalog, not a universal disaster API. Solana wallet transactions and GoDaddy domain registration are separate product/deployment work, not missing keys for the evacuation planner. The Databricks hook above also needs its deployed ingestion service; do not enter a workspace URL and treat it as connected.
 
 ## Prize submission scope
 

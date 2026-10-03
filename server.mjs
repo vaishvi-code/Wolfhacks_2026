@@ -10,6 +10,7 @@ import {validCoordinate,pointInGeometry,bboxGeometry} from './lib/geo.mjs';
 import {planRoute} from './lib/routing.mjs';
 import {planEvacuation,evacuationIncidents,HAZARDS} from './lib/evacuation.mjs';
 import {generateBrief,speech,integrationStatus,StreamSinks} from './lib/integrations.mjs';
+import {guidanceOptions,listVoices,transcribeRecording,MAX_RECORDING_BYTES,AUDIO_TYPES} from './lib/voice.mjs';
 
 const root=fileURLToPath(new URL('.',import.meta.url)),publicRoot=resolve(root,'public');
 const store=new Store(process.env.DATABASE_PATH||resolve(root,'data/terrawatch.sqlite'));
@@ -27,7 +28,7 @@ async function readBody(req){
   try{const value=JSON.parse(Buffer.concat(chunks).toString());if(!value||typeof value!=='object'||Array.isArray(value))throw Error();return value;}catch{throw error('Invalid JSON body.');}
 }
 function rateLimit(req,path){
-  const key=`${req.socket.remoteAddress}:${path}`,now=Date.now(),limit=path==='/api/reports'?8:path==='/api/brief'||path==='/api/audio'?6:30;
+  const key=`${req.socket.remoteAddress}:${path}`,now=Date.now(),limit=path==='/api/reports'?8:['/api/brief','/api/audio','/api/transcribe','/api/voices'].includes(path)?6:30;
   let item=limits.get(key);if(!item||now-item.start>60000){item={start:now,count:0};limits.set(key,item);}if(++item.count>limit)throw error('Too many requests. Please wait a minute.',429);
 }
 const server=http.createServer(async(req,res)=>{
@@ -54,7 +55,16 @@ const server=http.createServer(async(req,res)=>{
       // Only this UI can make credential-consuming browser requests.
       if(req.headers.origin){const origin=new URL(req.headers.origin);if(origin.host!==req.headers.host)throw error('Cross-origin requests are not allowed.',403);}
       if(req.headers['sec-fetch-site']==='cross-site')throw error('Cross-site requests are not allowed.',403);
-      rateLimit(req,path);const body=await readBody(req),{region,mode}=context(url,body);
+      rateLimit(req,path);
+      if(path==='/api/transcribe'){
+        const type=req.headers['content-type']?.split(';')[0]?.trim(),{language}=guidanceOptions({language:url.searchParams.get('language')||'en'});
+        if(!Object.hasOwn(AUDIO_TYPES,type))throw error('Use a WebM, Ogg, MP4, WAV, or MP3 recording.',415);
+        if(Number(req.headers['content-length'])>MAX_RECORDING_BYTES)throw error('Recording exceeds the 2 MB limit.',413);
+        let bytes=0;const chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>MAX_RECORDING_BYTES)throw error('Recording exceeds the 2 MB limit.',413);chunks.push(chunk);}
+        return send(res,200,await transcribeRecording(Buffer.concat(chunks),type,language));
+      }
+      const body=await readBody(req),{region,mode}=context(url,body);
+      if(path==='/api/voices')return send(res,200,{voices:await listVoices()});
       if(path==='/api/refresh'){if(mode==='live')await service.refresh(region);else service.demoCache.delete(region);return send(res,200,await service.snapshot(region,mode));}
       if(path==='/api/reports'){
         if(!['flooded_road','blocked_road','fallen_tree','heat_concern'].includes(body.kind))throw error('Choose a valid report type.');
@@ -78,15 +88,16 @@ const server=http.createServer(async(req,res)=>{
         return send(res,200,{...planEvacuation(snapshot,body),mapSnapshot});
       }
       if(path==='/api/brief'){
+        const options=guidanceOptions(body);
         const snapshot=await service.snapshot(region,mode);
         if(body.hazard){if(!HAZARDS.includes(body.hazard))throw error('Choose a valid disaster.');snapshot.incidents=evacuationIncidents(snapshot,body.hazard).filter(i=>i.category===body.hazard);snapshot.selectedHazard=body.hazard;}
-        const result=await generateBrief(snapshot);const id=randomUUID();
+        const result=await generateBrief(snapshot,options);const id=randomUUID();
         briefs.set(id,{...result,createdAt:Date.now()});return send(res,200,{...result,id});
       }
       if(path==='/api/audio'){
         const brief=briefs.get(body.briefId);if(!brief||Date.now()-brief.createdAt>3600000)throw error('Generate a fresh situation brief first.');
-        if(!process.env.ELEVENLABS_API_KEY||!process.env.ELEVENLABS_VOICE_ID)throw error('ElevenLabs is not configured. Add the API key and voice ID to .env.',503);
-        const audio=await speech(brief.text.slice(0,4500));res.writeHead(200,{'Content-Type':'audio/mpeg','Cache-Control':'no-store'});return res.end(audio);
+        if(!process.env.ELEVENLABS_API_KEY)throw error('ElevenLabs is not configured. Add the API key to .env.',503);
+        const audio=await speech(brief.text.slice(0,4500),{voiceId:body.voiceId});res.writeHead(200,{'Content-Type':'audio/mpeg','Cache-Control':'no-store'});return res.end(audio);
       }
       throw error('API endpoint not found.',404);
     }
