@@ -2,8 +2,9 @@
 
 Python 3.9+ library for North Carolina road-network and destination queries.
 Includes source-independent hazard mapping, configurable routing policy, and
-official NWS/USGS flood adapters. No frontend, server, disaster-specific scientific
-model, or synchronization is included.
+official NWS/USGS flood adapters, and persistent offline snapshots with explicit
+refresh and route reevaluation. No frontend, server, or disaster-specific
+scientific model is included.
 
 ## Structure
 
@@ -17,6 +18,8 @@ model, or synchronization is included.
 - `survival_geo/demo.py`: synthetic graph and offline route comparison.
 - `survival_geo/flood/`: official flood sources, freshness, alert-area adaptation,
   and a live demo; see [Flood adapter documentation](FLOOD.md).
+- `survival_geo/offline/`: atomic snapshot storage, offline routing, refresh,
+  and route reevaluation; see [Offline/reconnect documentation](OFFLINE.md).
 - `survival_geo/errors.py`, `validation.py`: shared errors and input checks.
 - `tests/`: synthetic graphs and mocked OSM requests; no live downloads.
 
@@ -55,8 +58,9 @@ print(json.dumps(route))
 ```
 
 Initial downloads require internet. An existing GraphML path loads locally without
-refreshing; destination discovery requires an OSM request. This is explicit file
-persistence, not offline synchronization. Downloads retain disconnected components
+refreshing; destination discovery requires an OSM request. The offline service
+adds persistent dynamic snapshots alongside GraphML; destination records must be
+supplied locally for offline filtering. Downloads retain disconnected components
 and road directionality. The caller should try other candidates when one has no route.
 
 Inputs use latitude/longitude; GeoJSON uses longitude/latitude in EPSG:4326.

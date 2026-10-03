@@ -31,11 +31,12 @@ def check_coverage(graph, latitude, longitude):
         raise LocationOutsideGraph('Location is outside the road graph coverage.')
 
 
-def load_road_graph(latitude, longitude, radius_m=5000, graph_path=None):
+def load_road_graph(latitude, longitude, radius_m=5000, graph_path=None, *, allow_download=True):
     """Load an existing GraphML file, or download and optionally save roads.
 
     Existing files are used as-is: there is no refresh or synchronization policy.
     Coverage is a bounding box; routing additionally limits node snapping.
+    Set allow_download=False for a strictly local load, including on cache misses.
     """
     lat, lon = location(latitude, longitude)
     radius_m = positive(radius_m, 'radius_m')
@@ -47,6 +48,8 @@ def load_road_graph(latitude, longitude, radius_m=5000, graph_path=None):
                 import json
                 graph.graph['coverage_bounds'] = json.loads(graph.graph['coverage_bounds'])
         else:
+            if not allow_download:
+                raise DataAccessError('Local GraphML is missing; downloads are disabled.')
             graph = ox.graph_from_point((lat, lon), dist=radius_m, network_type='drive', retain_all=True)
             # OSMnx returns (left, bottom, right, top) in version 2.
             graph.graph['coverage_bounds'] = ox.utils_geo.bbox_from_point((lat, lon), dist=radius_m)
@@ -59,7 +62,7 @@ def load_road_graph(latitude, longitude, radius_m=5000, graph_path=None):
                 ox.save_graphml(saved, path)
     except InsufficientResponseError as exc:
         raise EmptyOSMResults('OSM returned no roads.') from exc
-    except (EmptyOSMResults, ValueError):
+    except (DataAccessError, EmptyOSMResults, ValueError):
         raise
     except Exception as exc:
         raise DataAccessError('Unable to download or load the road graph.') from exc

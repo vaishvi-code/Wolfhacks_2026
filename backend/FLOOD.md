@@ -143,8 +143,9 @@ are not silently converted into successful empty responses. A failed source does
 not prevent distance routing. Comparison returns a degraded assessment and an
 explicit outage notice, even if routes happen to match.
 
-For later caller-managed caching, parsers accept raw local API payloads and their
-**original** fetch time. No cache store or synchronization is implemented:
+The [offline service](OFFLINE.md) now provides persistent snapshots and explicit
+refresh. At the source-adapter level, parsers also accept caller-managed raw local
+API payloads and their **original** fetch time:
 
 ```python
 from survival_geo.flood import NWSClient, parse_nws_alerts, use_local_fallback
@@ -156,9 +157,10 @@ latest = NWSClient().fetch(area='NC')
 alerts = use_local_fallback(latest, local)
 ```
 
-Fallback is used only on total unavailability, requires matching source/query
+This source-level fallback helper is used only on total unavailability, requires matching source/query
 scope, and retains unavailable status and old timestamps. Partial live results
-are not merged with cached records. Snapshots cannot reveal cancellation or
+are not merged by this helper; the offline service implements an explicit partial
+merge policy. Snapshots cannot reveal cancellation or
 replacement messages that were never fetched; age checks do not solve that gap.
 
 ## Integration and output
