@@ -98,3 +98,59 @@ def prepare_flood_hazards(result, *, now=None, freshness_policy=ALERT_FRESHNESS,
                        'hazard_id': hazard.id if hazard else None,
                        'used_for_routing': hazard is not None, 'exclusion_reason': reason})
     return FloodSnapshot(tuple(hazards), tuple(alerts))
+
+
+def flood_hazard_batch(alerts, observations=None, *, now=None,
+                       alert_freshness=ALERT_FRESHNESS, observation_freshness=None,
+                       source_confidence=1.0):
+    """Unified adapter result using existing NWS adaptation and freshness checks.
+
+    Preserve official severity in metadata; map event policy to generic severity.
+    Include stale alerts as visible, non-authoritative geometric evidence. USGS
+    measurements remain context only: gauge height is not road inundation depth.
+    """
+    from dataclasses import replace
+    from ..pipeline import HazardBatch
+    from .freshness import OBSERVATION_FRESHNESS
+    now = utc_now() if now is None else now
+    observation_freshness = (OBSERVATION_FRESHNESS if observation_freshness is None
+                             else observation_freshness)
+    snapshot = prepare_flood_hazards(alerts, now=now, freshness_policy=alert_freshness,
+                                    include_stale=True, source_confidence=source_confidence)
+    labels = {RiskLevel.SAFE: 'none', RiskLevel.CAUTION: 'moderate',
+              RiskLevel.HIGH_RISK: 'high'}
+    policy = FloodPolicy()
+    hazards = tuple(replace(h, severity=labels[policy.level_for(h)], metadata={
+        **h.metadata, 'reason': f"Intersects {h.metadata['event']} official alert area; "
+                               'does not establish physical road flooding.'}) for h in snapshot.hazards)
+    context = [{'kind': 'nws_alert', **a} for a in snapshot.alerts]
+    issues = list(alerts.issues)
+    degraded = alerts.status != 'available'
+    sources = [alerts] + ([observations] if observations is not None else [])
+    for source in sources:
+        age_policy = alert_freshness if source is alerts else observation_freshness
+        state = freshness(observed_at=source.fetched_at, fetched_at=source.fetched_at,
+                          now=now, policy=age_policy).value
+        context.append({'kind': 'source', **{k: v for k, v in source.to_dict().items()
+                                            if k != 'records'}, 'freshness': state})
+        if source.status != 'available' or state != 'current':
+            degraded = True
+            issues.append(f'{source.source}: status={source.status}, freshness={state}')
+    if observations is not None:
+        issues.extend(observations.issues)
+        for observation in observations.records:
+            state = freshness(observed_at=observation.observed_at, fetched_at=observation.fetched_at,
+                              expires_at=observation.expires_at, now=now,
+                              policy=observation_freshness).value
+            context.append({'kind': 'water_observation', **observation.to_dict(), 'freshness': state,
+                            'used_for_routing': False})
+            if state != 'current':
+                degraded = True
+                issues.append(f'{observation.id}: {state} observation; context only, not authoritative.')
+    if any(a['freshness'] not in ('current', 'expired') or
+           (a['freshness'] == 'current' and not a['used_for_routing']) for a in snapshot.alerts):
+        degraded = True
+        issues.append('Some alert evidence is stale, unknown, future, or unmappable; inspect context.')
+    return HazardBatch(hazards, 'partial' if degraded else 'available', tuple(issues),
+                       tuple(context), {'nws_query': dict(alerts.query),
+                                        'notice': 'Requested source scope; completeness is not guaranteed.'})

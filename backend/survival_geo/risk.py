@@ -79,6 +79,7 @@ class RoadRisk:
     hazard_ids: Tuple[str, ...]
     confidence: Optional[float]
     evaluated_at: datetime
+    contributions: Tuple[dict, ...] = ()
 
     def __post_init__(self):
         level = RiskLevel(self.risk_level)
@@ -109,7 +110,8 @@ class RoadRisk:
                 'uncertainty_penalty': self.uncertainty_penalty,
                 'passable': self.passable, 'reasons': list(self.reasons),
                 'hazard_ids': list(self.hazard_ids), 'confidence': self.confidence,
-                'evaluated_at': self.evaluated_at.isoformat()}
+                'evaluated_at': self.evaluated_at.isoformat(),
+                'contributions': [dict(item) for item in self.contributions]}
 
 
 def hazard_reason(hazard, level):
@@ -172,5 +174,19 @@ def evaluate_road_risks(edges, hazards, policy=None, evaluated_at=None):
             hazard_ids=tuple(h.id for h in contributors),
             confidence=min((h.confidence for h in contributors), default=None),
             evaluated_at=evaluated_at,
+            contributions=tuple({
+                'hazard_id': hazards[i].id, 'hazard_type': hazards[i].hazard_type,
+                'severity': hazards[i].severity, 'risk_level': levels[i].value,
+                'hazard_penalty': float(policy.penalties[levels[i]]),
+                'uncertainty_penalty': float(policy.uncertainty_penalty_scale *
+                    (1 - hazards[i].confidence) if levels[i] != RiskLevel.SAFE else 0),
+                'passable': levels[i] != RiskLevel.IMPASSABLE,
+                'applies_because': 'edge_geometry_intersects_hazard_geometry',
+                'reason': hazards[i].metadata.get('reason', hazard_reason(hazards[i], levels[i])),
+                'source': hazards[i].source, 'confidence': hazards[i].confidence,
+                'timestamp': hazards[i].timestamp.isoformat() if hazards[i].timestamp else None,
+                'freshness': hazards[i].metadata.get('freshness', 'unknown'),
+                'evidence': hazards[i].to_dict()['metadata'],
+            } for i in positions),
         )
     return results

@@ -38,6 +38,7 @@ def route_risk_summary(route, risks):
             'total_risk_penalty': hazard_penalty + uncertainty_penalty,
             'passable': all(r.passable for r in selected),
             'hazard_ids': sorted({h for r in selected for h in r.hazard_ids}),
+            'affected_edge_count': sum(bool(r.hazard_ids) for r in selected),
             'road_risks': [r.to_dict() for r in selected]}
 
 

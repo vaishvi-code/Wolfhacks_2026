@@ -11,3 +11,6 @@ __all__ = ['DEFAULT_CATEGORIES', 'discover_destinations', 'load_road_graph',
            'road_edges', 'build_route', 'distance_cost', 'Hazard', 'RiskLevel',
            'RiskPolicy', 'RoadRisk', 'evaluate_road_risks', 'build_risk_route',
            'compare_routes', 'risk_edge_cost', 'filter_destinations']
+
+from .pipeline import HazardBatch, compare_hazard_routes
+__all__ += ["HazardBatch", "compare_hazard_routes"]

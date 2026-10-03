@@ -33,6 +33,13 @@ class Hazard:
 
     Types are extensible strings (flood, hurricane, heat, wildfire, road_closure,
     user_reported, etc.). Metadata can carry source-specific measurements.
+
+    The unified pipeline recognizes metadata.freshness (current, stale, expired,
+    unknown, not_yet_active) and metadata.reason (human-readable evidence).
+    Missing freshness means unknown, never fresh by inference. Adapters compute
+    freshness at the caller's evaluation time and retain original fetch/expiry
+    times and quality information in metadata. Existing strict evaluation APIs
+    retain their severity-policy behavior regardless of this metadata.
     """
     id: str
     hazard_type: str
