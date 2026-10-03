@@ -1,0 +1,18 @@
+{
+  "type": "Feature",
+  "properties": {
+    "timestamp": "2026-10-03T14:10:00+00:00",
+    "temperature": {
+      "value": 35,
+      "unitCode": "wmoUnit:degC"
+    },
+    "relativeHumidity": {
+      "value": 55,
+      "unitCode": "wmoUnit:percent"
+    },
+    "heatIndex": {
+      "value": 40,
+      "unitCode": "wmoUnit:degC"
+    }
+  }
+}

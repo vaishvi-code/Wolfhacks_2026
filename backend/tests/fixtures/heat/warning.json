@@ -1,0 +1,50 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "synthetic-excessive-heat-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "synthetic-excessive-heat-warning",
+        "event": "Excessive Heat Warning",
+        "severity": "Severe",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:10:00+00:00",
+        "effective": "2026-10-03T14:10:00+00:00",
+        "onset": "2026-10-03T14:10:00+00:00",
+        "expires": "2026-10-03T16:10:00+00:00",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "description": "SYNTHETIC FIXTURE, NOT LIVE CONDITIONS."
+      }
+    }
+  ]
+}
