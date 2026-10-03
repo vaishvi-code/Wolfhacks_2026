@@ -23,15 +23,25 @@ class HazardBatch:
 
     available means the adapter completed its requested scope, never universal
     coverage. Context retains unmappable records, stale exclusions and gauges.
+    Optional persistence fields retain original source times, per-record origins,
+    source freshness policy (seconds), and explicit source withdrawal IDs. The
+    offline RefreshService calls registered adapters with its evaluation time;
+    compare_hazard_routes retains its zero-argument adapter API.
     """
     hazards: tuple = ()
     status: str = 'available'
     issues: tuple = ()
     context: tuple = ()
     coverage: Mapping = field(default_factory=dict)
+    fetched_at: object = None
+    attempted_at: object = None
+    data_origin: str = 'live'
+    hazard_origins: Mapping = field(default_factory=dict)
+    freshness_policy: Mapping = field(default_factory=dict)
+    removed_hazard_ids: tuple = ()
 
 
-def _normalize(record):
+def normalize_hazard(record):
     if isinstance(record, Hazard):
         # Revalidate caller-owned mutable metadata and any altered geometry.
         return Hazard(**{name: getattr(record, name) for name in Hazard.__dataclass_fields__})
@@ -48,7 +58,7 @@ def _normalize(record):
     return Hazard(**values)
 
 
-class _EvidencePolicy:
+class EvidencePolicy:
     """Stale/unknown evidence remains spatially visible but cannot block a road.
 
     Current evidence uses the caller policy. Informational evidence contributes
@@ -91,7 +101,7 @@ def compare_hazard_routes(graph, origin, destination, hazards=(), *, adapters=No
                              'issues': list(batch.issues)})
         for index, raw in enumerate(batch.hazards):
             try:
-                hazard = _normalize(raw)
+                hazard = normalize_hazard(raw)
                 state = hazard.metadata.get('freshness', 'unknown')
                 if state not in ('current', 'stale', 'expired', 'unknown', 'not_yet_active'):
                     raise ValueError('Invalid freshness state.')
@@ -126,7 +136,7 @@ def compare_hazard_routes(graph, origin, destination, hazards=(), *, adapters=No
     if duplicates:
         warnings.append({'code': 'DUPLICATE_HAZARDS', 'hazard_ids': duplicates})
     normalized = sorted((h for _, h in records if counts[h.id] == 1), key=lambda h: h.id)
-    result = compare_routes(graph, origin, destination, normalized, _EvidencePolicy(policy),
+    result = compare_routes(graph, origin, destination, normalized, EvidencePolicy(policy),
                             evaluated_at=now, max_snap_distance_m=max_snap_distance_m)
     authoritative = [h for h in normalized if h.metadata.get('freshness') == 'current'
                      and h.source != 'unknown']

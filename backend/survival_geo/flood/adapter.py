@@ -121,7 +121,7 @@ def flood_hazard_batch(alerts, observations=None, *, now=None,
               RiskLevel.HIGH_RISK: 'high'}
     policy = FloodPolicy()
     hazards = tuple(replace(h, severity=labels[policy.level_for(h)], metadata={
-        **h.metadata, 'reason': f"Intersects {h.metadata['event']} official alert area; "
+        **h.metadata, 'freshness_policy': alert_freshness.to_dict(), 'reason': f"Intersects {h.metadata['event']} official alert area; "
                                'does not establish physical road flooding.'}) for h in snapshot.hazards)
     context = [{'kind': 'nws_alert', **a} for a in snapshot.alerts]
     issues = list(alerts.issues)
@@ -151,6 +151,51 @@ def flood_hazard_batch(alerts, observations=None, *, now=None,
            (a['freshness'] == 'current' and not a['used_for_routing']) for a in snapshot.alerts):
         degraded = True
         issues.append('Some alert evidence is stale, unknown, future, or unmappable; inspect context.')
-    return HazardBatch(hazards, 'partial' if degraded else 'available', tuple(issues),
+    removed = tuple(f'nws:{a["id"]}' for a in snapshot.alerts
+                    if a['freshness'] == 'expired' or
+                    (a['status'] == 'Actual' and a['message_type'] == 'Cancel') or
+                    (a['exclusion_reason'] or '').startswith('Superseded or cancelled'))
+    status = ('unavailable' if alerts.status == 'unavailable' and observations is None
+              else 'partial' if degraded else 'available')
+    return HazardBatch(hazards, status, tuple(issues),
                        tuple(context), {'nws_query': dict(alerts.query),
-                                        'notice': 'Requested source scope; completeness is not guaranteed.'})
+                                        'notice': 'Requested source scope; completeness is not guaranteed.'},
+                       fetched_at=alerts.fetched_at, attempted_at=alerts.attempted_at,
+                       data_origin=alerts.data_origin, freshness_policy=alert_freshness.to_dict(),
+                       removed_hazard_ids=removed)
+
+
+
+def registered_flood_adapters(coverage, *, nws_client=None, usgs_client=None,
+                               nws_area='NC', gauge_radius_m=25000,
+                               alert_freshness=ALERT_FRESHNESS, observation_freshness=None):
+    """Independent NWS/USGS batches for the generic RefreshService registry.
+
+    Only refresh invokes these callables. Offline loading never touches clients.
+    USGS remains context-only. Uses the existing source clients and adaptation.
+    """
+    from ..pipeline import HazardBatch
+    from .nws import NWSClient
+    from .usgs import USGSClient
+    from .freshness import OBSERVATION_FRESHNESS
+    observation_freshness = observation_freshness or OBSERVATION_FRESHNESS
+    nws_client = nws_client or NWSClient()
+    usgs_client = usgs_client or USGSClient()
+
+    def nws(now):
+        alerts = nws_client.fetch(area=nws_area)
+        return flood_hazard_batch(alerts, now=now, alert_freshness=alert_freshness)
+
+    def usgs(now):
+        result = usgs_client.fetch(point=coverage.center, radius_m=gauge_radius_m)
+        context = [{'kind': 'source', **{k: v for k, v in result.to_dict().items() if k != 'records'}}]
+        context.extend({'kind': 'water_observation', **o.to_dict(), 'used_for_routing': False,
+                        'freshness_policy': observation_freshness.to_dict(),
+                        'freshness': freshness(observed_at=o.observed_at, fetched_at=o.fetched_at,
+                            expires_at=o.expires_at, now=now, policy=observation_freshness).value}
+                       for o in result.records)
+        return HazardBatch(status=result.status, issues=result.issues, context=tuple(context),
+                           coverage={'usgs_query': dict(result.query)}, fetched_at=result.fetched_at,
+                           attempted_at=result.attempted_at, data_origin=result.data_origin,
+                           freshness_policy=observation_freshness.to_dict())
+    return {'nws': nws, 'usgs': usgs}

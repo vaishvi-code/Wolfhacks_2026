@@ -1,4 +1,4 @@
-"""Versioned JSON codec using the existing Hazard and flood record models."""
+"""Versioned Snapshot model: legacy source records and generic hazard batches."""
 from dataclasses import dataclass
 from datetime import datetime
 import json
@@ -61,8 +61,14 @@ class Snapshot:
     coverage: Coverage
     sources: Mapping[str, SourceResult]
     hazards: tuple
+    schema_version: int = SCHEMA_VERSION
+    warnings: tuple = ()
+    hazard_coverage_state: str = 'unavailable'
 
     def to_dict(self):
+        if self.schema_version == 2:
+            from .normalized import snapshot_to_dict
+            return snapshot_to_dict(self)
         return {'schema_version': SCHEMA_VERSION, 'snapshot_id': self.id,
                 'created_at': iso(self.created_at), 'coverage': self.coverage.to_dict(),
                 'sources': {name: source.to_dict() for name, source in self.sources.items()},
@@ -169,6 +175,9 @@ def snapshot_from_dict(data):
     """Reject incompatible or corrupt snapshots with a stable CacheError code."""
     if not isinstance(data, dict):
         raise CacheError('MALFORMED', 'Snapshot must be a JSON object.')
+    if type(data.get('schema_version')) is int and data['schema_version'] == 2:
+        from .normalized import snapshot_from_dict as normalized_from_dict
+        return normalized_from_dict(data)
     if type(data.get('schema_version')) is not int or data['schema_version'] != SCHEMA_VERSION:
         raise CacheError('INCOMPATIBLE_VERSION', 'Unsupported or missing snapshot schema version.')
     try:
@@ -194,3 +203,9 @@ def snapshot_from_dict(data):
         return Snapshot(_text(data['snapshot_id']), created_at, coverage, sources, tuple(hazards))
     except Exception as exc:
         raise CacheError('MALFORMED', f'Invalid snapshot: {type(exc).__name__}: {exc}') from exc
+
+
+def make_hazard_snapshot(coverage, sources, *, now, snapshot_id=None, warnings=()):
+    """Build schema 2 in the same Snapshot model; sources are HazardBatch values."""
+    from .normalized import make_snapshot as normalized_snapshot
+    return normalized_snapshot(coverage, sources, now=now, snapshot_id=snapshot_id, warnings=warnings)

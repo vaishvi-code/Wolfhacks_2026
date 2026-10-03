@@ -23,6 +23,27 @@ def route_with_state(graph, origin, destination, state, *, candidates=(), policy
                      max_snap_distance_m=1000):
     """All inputs are local. Discovery/network/actual GPS hardware are not invoked."""
     _check_coverage(graph, state)
+    if state.generic:
+        from ..pipeline import EvidencePolicy, compare_hazard_routes, normalize_hazard
+        from ..risk import RiskPolicy
+        policy = RiskPolicy() if policy is None else policy
+        batches = state.hazard_batches
+        result = compare_hazard_routes(graph, origin, destination, hazards=None,
+            adapters={name: (lambda batch=batch: batch) for name, batch in batches.items()},
+            policy=policy, evaluated_at=state.evaluated_at, max_snap_distance_m=max_snap_distance_m)
+        accepted_hazards = tuple(normalize_hazard(item) for item in result['hazard_data']['hazards'])
+        result['destinations'] = filter_destinations(candidates, accepted_hazards, EvidencePolicy(policy),
+                                                     evaluated_at=state.evaluated_at)
+        report = state.to_dict()
+        if len(accepted_hazards) != len(state.hazards):
+            report['hazard_coverage_state'] = result['hazard_data']['coverage_status']
+        if report['hazard_coverage_state'] != 'available':
+            result['hazard_data']['coverage_status'] = report['hazard_coverage_state']
+        if state.cache_error:
+            result['hazard_data']['warnings'].append({'code': 'CACHE_ERROR', **state.cache_error})
+        result['hazard_data']['warnings'].extend(report['warnings'])
+        result['data_state'] = report
+        return result
     policy = FloodPolicy() if policy is None else policy
     result = compare_flood_routes(
         graph, origin, destination, state.sources['nws'], state.sources['usgs'],
@@ -70,6 +91,12 @@ def reevaluate_route(graph, route, previous_state, current_state, *, policy=None
     Viability means graph/policy passability, never verified physical safety.
     Missing/aging evidence is distinguished from a confirmed changed snapshot.
     """
+    if previous_state.generic or current_state.generic:
+        if previous_state.generic != current_state.generic:
+            raise ValueError('Cannot compare legacy and unified data states.')
+        return _reevaluate_normalized(graph, route, previous_state, current_state, policy=policy,
+            recalculate=recalculate, current_position=current_position,
+            max_snap_distance_m=max_snap_distance_m)
     if previous_state.coverage != current_state.coverage:
         raise CacheError('COVERAGE_MISMATCH', 'Cannot compare different snapshot regions.')
     edges = _check_coverage(graph, current_state)
@@ -150,3 +177,156 @@ def reevaluate_route(graph, route, previous_state, current_state, *, policy=None
             'alternative_status': alternative_status, 'alternative_route': alternative,
             'reason_codes': reasons, 'data_state': source_report,
             'explanation': 'Evaluated the supplied route against known policy constraints; physical safety is not established.'}
+
+
+
+def _reevaluate_normalized(graph, route, previous_state, current_state, *, policy=None,
+                           recalculate=True, current_position=None, max_snap_distance_m=1000):
+    """Generic reevaluation over existing exact-edge risks and cost hooks."""
+    from ..pipeline import EvidencePolicy
+    from ..risk import RiskPolicy
+    from .normalized import hazard_freshness
+    if previous_state.coverage != current_state.coverage:
+        raise CacheError('COVERAGE_MISMATCH', 'Cannot compare different snapshot regions.')
+    edges = _check_coverage(graph, current_state)
+    ids = _edge_ids(route)
+    policy = EvidencePolicy(RiskPolicy() if policy is None else policy)
+    old_batches, new_batches = previous_state.hazard_batches, current_state.hazard_batches
+    old_hazards = {h.id: (name, h) for name, batch in old_batches.items() for h in batch.hazards}
+    new_hazards = {h.id: (name, h) for name, batch in new_batches.items() for h in batch.hazards}
+    invalid_current_sources, validation_warnings = set(), []
+    def classified(hazards, owners, current):
+        valid = []
+        for hazard in hazards:
+            try:
+                RiskLevel(policy.policy.level_for(hazard))
+                valid.append(hazard)
+            except (ValueError, TypeError, KeyError) as exc:
+                name = owners[hazard.id][0]
+                validation_warnings.append({'code': 'INVALID_POLICY_HAZARD', 'adapter': name,
+                                            'hazard_id': hazard.id, 'reason': str(exc)})
+                if current:
+                    invalid_current_sources.add(name)
+        return tuple(valid)
+    old_valid = classified(previous_state.hazards, old_hazards, False)
+    new_valid = classified(current_state.hazards, new_hazards, True)
+    old = evaluate_road_risks(edges, old_valid, policy, previous_state.evaluated_at)
+    new = evaluate_road_risks(edges, new_valid, policy, current_state.evaluated_at)
+    before, after = _summary(route, ids, old), _summary(route, ids, new)
+    def active_ids(summary):
+        return {c['hazard_id'] for r in summary['road_risks'] for c in r['contributions']
+                if c['risk_level'] != RiskLevel.SAFE.value}
+    old_ids, new_ids = active_ids(before), active_ids(after)
+    changes, affected, triggers, triggering_ids = [], [], [], set()
+    for edge in ids:
+        if edge not in new or edge not in old:
+            continue
+        previous, current = old[edge], new[edge]
+        added = sorted({c['hazard_id'] for c in current.contributions if c['risk_level'] != 'SAFE'} -
+                       {c['hazard_id'] for c in previous.contributions if c['risk_level'] != 'SAFE'})
+        before_contributions = {c['hazard_id']: c for c in previous.contributions}
+        increased_ids = sorted(c['hazard_id'] for c in current.contributions
+            if c['risk_level'] != 'SAFE' and (c['hazard_id'] not in before_contributions
+                or LEVEL_ORDER[RiskLevel(c['risk_level'])] >
+                   LEVEL_ORDER[RiskLevel(before_contributions[c['hazard_id']]['risk_level'])]
+                or c['hazard_penalty'] + c['uncertainty_penalty'] >
+                   before_contributions[c['hazard_id']]['hazard_penalty'] +
+                   before_contributions[c['hazard_id']]['uncertainty_penalty']))
+        if (current.risk_level != previous.risk_level or current.penalty != previous.penalty
+                or set(current.hazard_ids) != set(previous.hazard_ids)):
+            changes.append({'edge_id': current.to_dict()['edge_id'], 'previous': previous.to_dict(),
+                            'current': current.to_dict(), 'triggering_hazard_ids': increased_ids})
+        increased = (current.penalty > previous.penalty
+                     or LEVEL_ORDER[current.risk_level] > LEVEL_ORDER[previous.risk_level] or bool(added))
+        if increased and current.risk_level != RiskLevel.SAFE:
+            affected.append(current.to_dict())
+            triggering_ids.update(increased_ids)
+            triggers.append('NEW_PENALIZED_EDGE' if current.passable else 'NEW_BLOCKED_EDGE')
+    if after['missing_edges']:
+        triggers.append('ROUTE_EDGE_MISSING')
+    if not after['passable']:
+        triggers.append('ROUTE_NOT_PASSABLE')
+    resolved, unknown = [], []
+    for hazard_id in sorted(old_ids - new_ids):
+        name, hazard = old_hazards[hazard_id]
+        batch = new_batches.get(name)
+        value = hazard_freshness(hazard, old_batches[name], current_state.evaluated_at)
+        if value == 'expired':
+            resolved.append({'hazard_id': hazard_id, 'reason_code': 'HAZARD_EXPIRED',
+                             'evidence': hazard.to_dict()})
+        elif (batch is not None and hazard_id in batch.removed_hazard_ids
+              and current_state.to_dict()['sources'][name]['fetch_freshness'] == 'current'):
+            resolved.append({'hazard_id': hazard_id, 'reason_code': 'HAZARD_WITHDRAWN_BY_SOURCE',
+                             'evidence': hazard.to_dict()})
+        elif (batch is not None and batch.status == 'available' and not batch.issues
+              and name not in invalid_current_sources
+              and batch.data_origin == 'live'
+              and current_state.to_dict()['sources'][name]['fetch_freshness'] == 'current'
+              and not (current_state.snapshot and any(w.get('adapter') in (None, name)
+                       for w in current_state.snapshot.warnings))
+              and (hazard_id not in new_hazards or
+                   new_hazards[hazard_id][1].metadata.get('freshness') == 'current')):
+            resolved.append({'hazard_id': hazard_id, 'reason_code': 'NO_LONGER_AFFECTS_COMPLETE_REFRESH',
+                             'evidence': hazard.to_dict()})
+        else:
+            unknown.append(hazard_id)
+    reasons = sorted(set(triggers))
+    if unknown:
+        reasons.append('HAZARD_APPLICABILITY_UNKNOWN')
+    report = current_state.to_dict()
+    report['warnings'].extend(validation_warnings)
+    if invalid_current_sources:
+        report['hazard_coverage_state'] = 'incomplete' if any(
+            h.metadata.get('freshness') == 'current' and h.source != 'unknown' for h in new_valid) else 'unavailable'
+    if report['hazard_coverage_state'] != 'available':
+        reasons.append('DATA_LIMITED')
+    if not triggers:
+        reasons.append('NO_NEW_REROUTE_TRIGGER')
+    alternative, status, updated, distance_difference, risk_difference = None, 'NOT_REQUESTED', False, None, None
+    avoided_edges, avoided_hazards = None, None
+    affected_difference, blocked_difference, exposure_difference = None, None, None
+    if triggers and recalculate:
+        origin = current_position or (route['origin']['latitude'], route['origin']['longitude'])
+        destination = (route['destination']['latitude'], route['destination']['longitude'])
+        comparison = route_with_state(graph, origin, destination, current_state,
+                                      policy=policy.policy, max_snap_distance_m=max_snap_distance_m)
+        alternative = comparison['safer']['route']
+        if alternative is None:
+            status = 'NO_ROUTE'
+            reasons.append('NO_PASSABLE_ROUTE')
+        else:
+            updated = alternative['route_edges'] != route['route_edges']
+            status = 'UPDATED' if updated else 'SAME_ROUTE'
+            reasons.append('ALTERNATIVE_ROUTE_FOUND' if updated else 'NO_BETTER_ROUTE')
+            distance_difference = alternative['total_distance_m'] - after['total_distance_m']
+            risk_difference = alternative['total_risk_penalty'] - after['total_risk_penalty']
+            used = {(e['u'], e['v'], e['key']) for e in alternative['route_edges']}
+            avoided_edges = [r for r in after['road_risks'] if r['risk_level'] != 'SAFE'
+                             and tuple(r['edge_id'][k] for k in ('u', 'v', 'key')) not in used]
+            alt_active = {c['hazard_id'] for r in alternative['road_risks'] for c in r['contributions']
+                          if c['risk_level'] != 'SAFE'}
+            avoided_hazards = sorted(new_ids - alt_active)
+            affected_difference = sum(r['risk_level'] != 'SAFE' for r in alternative['road_risks']) - \
+                                  sum(r['risk_level'] != 'SAFE' for r in after['road_risks'])
+            blocked_difference = sum(not r['passable'] for r in alternative['road_risks']) - \
+                                 sum(not r['passable'] for r in after['road_risks'])
+            exposure_difference = len(alt_active) - len(new_ids)
+    return {'route_still_viable': after['passable'], 'reroute_recommended': bool(triggers),
+            'newly_affected_edges': affected, 'changed_edges': changes,
+            'newly_encountered_hazard_ids': sorted(new_ids - old_ids),
+            'hazards_causing_reroute': [new_hazards[id][1].to_dict() for id in sorted(triggering_ids)],
+            'newly_encountered_hazards': [new_hazards[id][1].to_dict() for id in sorted(new_ids - old_ids)],
+            'resolved_hazards': resolved, 'hazard_applicability_unknown': unknown,
+            'old_snapshot_timestamp': iso(previous_state.snapshot.created_at) if previous_state.snapshot else None,
+            'new_snapshot_timestamp': iso(current_state.snapshot.created_at) if current_state.snapshot else None,
+            'old_state_timestamp': iso(previous_state.evaluated_at), 'new_state_timestamp': iso(current_state.evaluated_at),
+            'old_route_summary': before, 'current_route_summary': after,
+            'alternative_route': alternative, 'alternative_status': status, 'route_updated': updated,
+            'distance_difference_m': distance_difference, 'risk_penalty_difference': risk_difference,
+            'affected_edge_count_difference': affected_difference,
+            'blocked_edge_count_difference': blocked_difference,
+            'hazard_exposure_difference': exposure_difference,
+            'affected_edge_count': sum(r['risk_level'] != 'SAFE' for r in after['road_risks']),
+            'avoided_edge_count': len(avoided_edges) if avoided_edges is not None else None,
+            'avoided_edges': avoided_edges, 'avoided_hazard_ids': avoided_hazards,
+            'reason_codes': reasons, 'data_state': report}

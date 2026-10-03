@@ -1,5 +1,9 @@
 # Offline snapshots and reconnect routing
 
+For schema-2 multi-hazard persistence using the same offline package, see
+[Unified offline persistence](MULTI_HAZARD_OFFLINE.md). The schema-1 flood API
+described below remains supported.
+
 The offline layer composes the existing flood adapters, freshness utilities,
 standardized hazards, destination filtering, and routing engine. The caller
 explicitly chooses an offline load or a refresh attempt. There is no connectivity
