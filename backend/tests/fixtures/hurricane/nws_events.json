@@ -1,0 +1,837 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-hurricane-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-hurricane-warning",
+        "event": "Hurricane Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-hurricane-watch",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-hurricane-watch",
+        "event": "Hurricane Watch",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-tropical-storm-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-tropical-storm-warning",
+        "event": "Tropical Storm Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-tropical-storm-watch",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-tropical-storm-watch",
+        "event": "Tropical Storm Watch",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-storm-surge-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-storm-surge-warning",
+        "event": "Storm Surge Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-storm-surge-watch",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-storm-surge-watch",
+        "event": "Storm Surge Watch",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-hurricane-local-statement",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-hurricane-local-statement",
+        "event": "Hurricane Local Statement",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-typhoon-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-typhoon-warning",
+        "event": "Typhoon Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-heat-advisory",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-heat-advisory",
+        "event": "Heat Advisory",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-flood-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-flood-warning",
+        "event": "Flood Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-severe-thunderstorm-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-severe-thunderstorm-warning",
+        "event": "Severe Thunderstorm Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-hurricane-force-wind-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-hurricane-force-wind-warning",
+        "event": "Hurricane Force Wind Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "https://api.weather.gov/alerts/urn:oid:synthetic-extreme-wind-warning",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.633,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7699
+            ],
+            [
+              -78.632,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7701
+            ],
+            [
+              -78.633,
+              35.7699
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:synthetic-extreme-wind-warning",
+        "event": "Extreme Wind Warning",
+        "severity": "Extreme",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "status": "Actual",
+        "messageType": "Alert",
+        "sent": "2026-10-03T14:00:00Z",
+        "effective": "2026-10-03T14:00:00Z",
+        "onset": "2026-10-03T14:30:00Z",
+        "expires": "2026-10-03T20:00:00Z",
+        "ends": null,
+        "headline": "SYNTHETIC TEST ONLY: Hurricane Warning",
+        "description": "Synthetic official-style footprint for tests, not a real event.",
+        "instruction": "Synthetic fixture; no real-world instructions.",
+        "areaDesc": "Synthetic road corridor",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/NCZ999"
+        ],
+        "parameters": {
+          "stormName": [
+            "SYNTHETIC TEST STORM"
+          ],
+          "stormId": [
+            "al992026"
+          ],
+          "windThreat": [
+            "Hurricane-force winds"
+          ]
+        },
+        "references": []
+      }
+    }
+  ]
+}

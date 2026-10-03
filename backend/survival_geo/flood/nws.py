@@ -15,9 +15,10 @@ NWS_SOURCE = 'NOAA/NWS'
 NWS_ENDPOINT = 'https://api.weather.gov/alerts/active'
 
 
-def parse_nws_alerts(payload, *, fetched_at, query=None, data_origin='local'):
+def parse_nws_alerts(payload, *, fetched_at, query=None, data_origin='local', event_filter=None):
     """Pure parser also usable with caller-managed saved response JSON.
 
+    event_filter selects other CAP event families; the default remains flood.
     Keep expired, future, geometry-less and cancellation records for inspection;
     the flood adapter decides which may be routed against at evaluation time.
     """
@@ -36,7 +37,8 @@ def parse_nws_alerts(payload, *, fetched_at, query=None, data_origin='local'):
                 raise ValueError('Missing feature properties.')
             properties = feature['properties']
             event = required_text(properties, 'event')
-            if 'flood' not in event.casefold():
+            accepted = event_filter(event) if event_filter is not None else 'flood' in event.casefold()
+            if not accepted:
                 continue
             alert_id = required_text(properties, 'id')
             if alert_id in seen:
@@ -80,10 +82,11 @@ def parse_nws_alerts(payload, *, fetched_at, query=None, data_origin='local'):
 
 class NWSClient:
     def __init__(self, *, user_agent='Wolfhacks-NC-Survival/0.1', session=None,
-                 timeout=(5, 20), max_pages=5):
+                 timeout=(5, 20), max_pages=5, event_filter=None):
         if not isinstance(user_agent, str) or not user_agent.strip():
             raise ValueError('NWS requires an identifying User-Agent.')
         self.session, self.timeout, self.max_pages = session, timeout, max_pages
+        self.event_filter = event_filter
         self.headers = {'User-Agent': user_agent, 'Accept': 'application/geo+json'}
 
     def fetch(self, *, point=None, area=None):
@@ -106,7 +109,7 @@ class NWSClient:
                                           max_pages=self.max_pages)
         fetched_at = utc_now()
         result = parse_nws_alerts(downloaded.payload, fetched_at=fetched_at,
-                                  query=query, data_origin='live')
+                                  query=query, data_origin='live', event_filter=self.event_filter)
         status = downloaded.status if downloaded.status != 'available' else result.status
         return replace(result, status=status, issues=downloaded.issues + result.issues,
                        fetched_at=None if status == 'unavailable' else fetched_at,

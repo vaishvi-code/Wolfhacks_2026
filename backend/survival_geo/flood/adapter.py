@@ -46,6 +46,16 @@ class FloodSnapshot:
 
 def prepare_flood_hazards(result, *, now=None, freshness_policy=ALERT_FRESHNESS,
                          include_stale=False, source_confidence=1.0):
+    """Preserve the flood API around shared official CAP lifecycle adaptation."""
+    return FloodSnapshot(*prepare_alert_hazards(
+        result, hazard_type='flood',
+        interpretation='Alert-area intersection only; does not establish road flooding.',
+        now=now, freshness_policy=freshness_policy, include_stale=include_stale,
+        source_confidence=source_confidence))
+
+
+def prepare_alert_hazards(result, *, hazard_type, interpretation, now=None,
+                          freshness_policy=ALERT_FRESHNESS, include_stale=False, source_confidence=1.0):
     """Pure adaptation: never downloads or fabricates official footprints.
 
     source_confidence is an explicit integration setting, not an NWS-provided
@@ -88,16 +98,16 @@ def prepare_flood_hazards(result, *, now=None, freshness_policy=ALERT_FRESHNESS,
                         'fetched_at': iso(alert.fetched_at), 'freshness': state.value,
                         'data_origin': result.data_origin, 'source_status': result.status,
                         'evidence_kind': 'official_alert_area',
-                        'confidence_basis': 'configured source confidence; not a flood probability',
-                        'interpretation': 'Alert-area intersection only; does not establish road flooding.'}
-            hazard = Hazard(id=f'nws:{alert.id}', hazard_type='flood', geometry=alert.geometry,
+                        'confidence_basis': f'configured source confidence; not a {hazard_type} probability',
+                        'interpretation': interpretation}
+            hazard = Hazard(id=f'nws:{alert.id}', hazard_type=hazard_type, geometry=alert.geometry,
                             severity=alert.severity, timestamp=alert.sent, source=alert.source,
                             confidence=source_confidence, metadata=metadata)
             hazards.append(hazard)
         alerts.append({**alert.to_dict(), 'freshness': state.value,
                        'hazard_id': hazard.id if hazard else None,
                        'used_for_routing': hazard is not None, 'exclusion_reason': reason})
-    return FloodSnapshot(tuple(hazards), tuple(alerts))
+    return tuple(hazards), tuple(alerts)
 
 
 def flood_hazard_batch(alerts, observations=None, *, now=None,
