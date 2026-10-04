@@ -2,6 +2,7 @@ import {initGuidance} from './guidance.js';
 import {savePack,loadPack} from './offline.js';
 import {roadFeatures} from './offline-map.js';
 import {requestRoute} from './route-request.js';
+import {initPreparedness} from './preparedness.js';
 import {destinationCandidates,evacuationIncidents,planEvacuation} from '/shared/evacuation.mjs';
 import {pointInGeometry,bboxGeometry,distanceKm} from '/shared/geo.mjs';
 
@@ -31,7 +32,7 @@ function renderOfflineMap(){
 }
 const warnings=L.layerGroup().addTo(map),resources=L.layerGroup().addTo(map),personal=L.layerGroup().addTo(map),routeLayer=L.layerGroup().addTo(map),observations=L.layerGroup().addTo(map);
 new ResizeObserver(()=>map.invalidateSize()).observe($('map'));
-let toastTimer,guidance;
+let toastTimer,guidance,preparedness;
 function toast(message,error=false){$('toast').textContent=message;$('toast').classList.toggle('error',error);$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,5000);}
 async function api(path,body){const r=await fetch(path,{...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(path==='/api/evacuate'?8000:95000)});const data=await r.json();if(!r.ok)throw new Error(data.error||'The request failed.');return data;}
 const context=()=>({region:state.region,mode:state.mode,hazard:state.hazard});
@@ -42,6 +43,7 @@ function fingerprint(s){return JSON.stringify({incidents:evacuationIncidents(s,s
 function clearBrief(){guidance?.reset();}
 function invalidate(message=''){state.revision++;state.plan=null;state.routeIndex=0;state.showComparison=false;state.busy=false;$('planner-error').textContent=message;clearBrief();renderResult();updateControls();}
 function updateControls(){
+  preparedness?.render();
   const m=META[state.hazard];document.documentElement.style.setProperty('--accent',m.color);
   document.querySelectorAll('[data-hazard]').forEach(el=>{const yes=el.dataset.hazard===state.hazard;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',yes);});
   for(const mode of ['live','demo']){$(`mode-${mode}`).classList.toggle('selected',state.mode===mode);$(`mode-${mode}`).setAttribute('aria-pressed',state.mode===mode);}
@@ -170,5 +172,6 @@ setInterval(()=>{if(state.snapshot){if(state.mode==='live'&&state.plan&&Date.now
 window.addEventListener('offline',()=>{state.stream?.close();loadSnapshot();});
 window.addEventListener('online',()=>{if(state.offline)toast('Connection restored. Refresh conditions before planning.');});
 guidance=initGuidance({state,api,context,toast,download});
+preparedness=initPreparedness({state,toast});
 hydrate();updateControls();api('/api/config').then(c=>state.config=c).catch(()=>{});loadSnapshot({reset:true});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});

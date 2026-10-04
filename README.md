@@ -28,6 +28,9 @@ Copy-Item .env.example .env
 
 ## Implemented workflows
 
+- **Preparation checklist** for flood, hurricane, and extreme heat, with eight tasks per disaster and device-local completion saved for offline use. Guidance links point to Ready.gov, NHC, and NWS.
+- **Upcoming-alert panel** preserves NWS onset, effective, end, and expiry separately. Shows expected start countdowns, certainty, instructions, and regional coverage; unknown timing and stale/offline snapshots are disclosed. Demo timings are fictional. New issued alerts produce an in-app notice while open; background push notifications and independent future disaster prediction are not implemented.
+
 - Interactive **Leaflet map** focused on one selected disaster, your origin, and suggested destinations. Switching disasters clears the previous route; changing city or mode clears the origin too.
 - **NOAA/NWS** alerts and station observations. Expired and test alerts are excluded. Missing polygons can be resolved from official affected zones; missing areas stay explicitly unavailable.
 - **USGS** gage-height observations and historical trends. The server polls every 60 seconds and uses **Server-Sent Events** to update the browser. Observations retain their actual sensor timestamps; polling does not fabricate new observations.

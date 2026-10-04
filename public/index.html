@@ -24,6 +24,11 @@
   <section class="hero"><div><div class="eyebrow"><span class="dot"></span> ONE SITUATION. YOUR NEXT STEP.</div><h1>Find your way out.</h1><p>Choose the disaster. Set your location. Explore a route beyond the warning area.</p></div><div class="mode-control" aria-label="Data mode"><button id="mode-live" aria-pressed="false">Live conditions</button><button id="mode-demo" class="selected" aria-pressed="true">Try a demo</button></div></section>
   <div class="mode-banner" id="mode-banner" role="status">Loading your planner…</div>
 
+  <section class="preparedness-layout" aria-label="Prepare before the disaster">
+    <section class="panel preparedness-panel"><div class="prep-heading"><div><span class="eyebrow">PLAN AHEAD</span><h2>What’s coming?</h2></div><span id="alert-location" class="prep-muted"></span></div><p class="prep-muted" id="alert-freshness">Checking alert times…</p><div id="upcoming-alerts" aria-live="polite"></div><p class="prep-footnote">Expected times come from issued alerts, not a prediction of an exact impact time. Alerts update while the app is open; background phone notifications are not enabled.</p></section>
+    <section class="panel preparedness-panel"><div class="prep-heading"><h2 id="prep-title">Your preparation checklist</h2><button class="text-button" id="prep-reset">Reset checklist</button></div><div class="prep-completion"><progress id="prep-meter" value="0" max="8" aria-label="Checklist completion"></progress><span id="prep-progress"></span></div><div id="prep-items"></div><p class="prep-footnote">Progress is saved on this device and works offline. Completing this list does not establish safety. <a href="https://www.ready.gov/kit" target="_blank" rel="noopener noreferrer">Emergency kit guidance ↗</a> · <a id="prep-source" href="https://www.ready.gov/floods" target="_blank" rel="noopener noreferrer">Disaster preparation ↗</a></p></section>
+  </section>
+
   <section class="journey-layout">
     <aside class="journey-panel panel" aria-label="Set up your evacuation route">
       <section class="journey-step"><div class="step-heading"><span class="step-number">01</span><h2>What are you facing?</h2></div>
