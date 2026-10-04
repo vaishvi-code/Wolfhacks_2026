@@ -1,4 +1,4 @@
-# TerraWatch
+# WayAhead
 
 A working North Carolina disaster-planning application for **hurricanes, floods, and heat waves**, built for the Center for Geospatial Analytics track.
 
@@ -104,8 +104,8 @@ See [integration setup](docs/INTEGRATIONS.md). Bonus eligibility is determined b
 Use the included Dockerfile on a container host with **HTTPS, persistent disk mounted at `/app/data`, and SSE support**. Keep one instance for SQLite. Example:
 
 ```sh
-docker build -t terrawatch .
-docker run --env-file .env -e HOST=0.0.0.0 -p 4173:4173 -v terrawatch-data:/app/data terrawatch
+docker build -t wayahead .
+docker run --env-file .env -e HOST=0.0.0.0 -p 4173:4173 -v wayahead-data:/app/data wayahead
 ```
 
 Keys go in host secrets/environment variables. Configure a reverse proxy to preserve `Host`, disable buffering for `/api/stream`, and allow its long-lived connections. For an Internet-facing instance, add authentication and report moderation before enabling write/paid endpoints for users. The default server binds to localhost and does not authenticate users; request throttling alone is not access control.

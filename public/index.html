@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#176450"><meta name="description" content="Choose a disaster, set your location, and explore a route to a resource outside the warning area.">
-  <title>TerraWatch · Your way out</title>
+  <meta name="theme-color" content="#cc0000"><meta name="description" content="Choose a disaster, set your location, and explore a route to a resource outside the warning area.">
+  <title>WayAhead · Your way out</title>
   <link rel="icon" href="/icons/logo.svg" type="image/svg+xml"><link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="TerraWatch">
+  <meta name="apple-mobile-web-app-title" content="WayAhead">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="/vendor/leaflet.css"><link rel="stylesheet" href="/styles.css">
   <script src="/vendor/leaflet.js" defer></script><script src="/vendor/pmtiles.js" defer></script><script src="/vendor/protomaps-leaflet.js" defer></script><script src="/app.js" type="module"></script>
@@ -16,21 +16,22 @@
 <body>
 <a class="skip-link" href="#main">Skip to evacuation planner</a>
 <header class="app-header">
-  <a class="brand" href="/" aria-label="TerraWatch home"><img src="/icons/logo.svg" width="38" height="38" alt=""><span>terra<span>watch</span><small>PREPARE. PLAN. GO.</small></span></a>
+  <a class="brand" href="/" aria-label="WayAhead home"><img src="/icons/logo.svg" width="38" height="38" alt=""><span>Way<span>Ahead</span><small>PREPARE. PLAN. GO.</small></span></a>
   <span class="header-purpose">Emergency planner</span>
   <div class="header-actions"><label class="region-control"><span data-icon="pin"></span><span class="sr-only">Coverage area</span><select id="region"><option value="raleigh">Raleigh, NC</option><option value="wilmington">Wilmington, NC</option><option value="asheville">Asheville, NC</option></select></label><button class="text-button" id="open-data" aria-label="Data & help"><span data-icon="layers"></span><span>Data & help</span></button></div>
 </header>
 <main id="main">
-  <section class="hero"><div><div class="eyebrow"><span class="dot"></span> YOUR EMERGENCY PLAN</div><h1>Your next step, made simple.</h1><p>Pick a hazard. Set your location. Find a route.</p><nav class="quick-actions" aria-label="Quick actions"><a href="#route-planner">Find a route ↓</a><a id="quick-prepare" href="#prep-checklist">Get prepared ↓</a></nav></div><div class="mode-control" aria-label="Data mode"><button id="mode-live" aria-pressed="false">Live conditions</button><button id="mode-demo" class="selected" aria-pressed="true">Try a demo</button></div></section>
+  <section class="hero"><div><div class="eyebrow"><span class="dot"></span> YOUR EMERGENCY PLAN</div><h1>Your next step, made simple.</h1><p>Pick a hazard. Set your location. Find a route.</p></div><div class="mode-control" aria-label="Data mode"><button id="mode-live" aria-pressed="false">Live conditions</button><button id="mode-demo" class="selected" aria-pressed="true">Try a demo</button></div></section>
   <div class="mode-banner" id="mode-banner" role="status">Loading your planner…</div>
 
-  <section class="preparedness-layout" aria-label="Prepare before the disaster">
-    <section class="panel preparedness-panel"><div class="prep-heading"><div><span class="eyebrow">PLAN AHEAD</span><h2>What’s coming?</h2></div><span id="alert-location" class="prep-muted"></span></div><p class="prep-muted" id="alert-freshness">Checking alert times…</p><div id="upcoming-alerts" aria-live="polite"></div><p class="prep-footnote">Issued alert times · updates while open · no background notifications.</p></section>
-    <section class="panel preparedness-panel"><div class="prep-heading"><h2 id="prep-title">Your preparation checklist</h2><button class="text-button" id="prep-reset">Reset checklist</button></div><div class="prep-completion"><progress id="prep-meter" value="0" max="8" aria-label="Checklist completion"></progress><span id="prep-progress"></span></div><details class="prep-disclosure" id="prep-checklist"><summary>Open checklist <span>8 quick steps</span></summary><div id="prep-items"></div></details><p class="prep-footnote">Saved on this device. <a href="https://www.ready.gov/kit" target="_blank" rel="noopener noreferrer">Emergency kit guidance ↗</a> · <a id="prep-source" href="https://www.ready.gov/floods" target="_blank" rel="noopener noreferrer">Disaster preparation ↗</a></p></section>
-  </section>
-
+  <nav class="feature-tabs" role="tablist" aria-label="App features">
+    <button id="tab-route" role="tab" aria-selected="true" aria-controls="view-route" tabindex="0" data-view="route">Route</button>
+    <button id="tab-prepare" role="tab" aria-selected="false" aria-controls="view-prepare" tabindex="-1" data-view="prepare">Prepare</button>
+    <button id="tab-updates" role="tab" aria-selected="false" aria-controls="view-updates" tabindex="-1" data-view="updates">Updates</button>
+  </nav>
+  <div id="view-route" role="tabpanel" aria-labelledby="tab-route">
   <section class="journey-layout" id="route-planner">
-    <aside class="journey-panel panel" aria-label="Set up your evacuation route">
+    <aside id="route-settings" class="journey-panel panel" aria-label="Set up your evacuation route">
       <section class="journey-step"><div class="step-heading"><span class="step-number">01</span><h2>Choose a hazard</h2></div>
         <div class="hazard-picker" aria-label="Choose one disaster">
           <button class="hazard-choice selected" data-hazard="flood" aria-pressed="true"><span data-icon="flood"></span><strong>Flood</strong></button>
@@ -59,43 +60,64 @@
     </aside>
 
     <div class="map-column">
-      <section class="map-panel panel"><div class="map-toolbar"><div class="map-title"><span data-icon="map"></span><strong id="map-title">Your flood exit plan</strong><span id="map-region">Raleigh</span></div><button class="text-button" id="refresh"><span data-icon="refresh"></span> Refresh conditions</button></div>
-        <div class="map-wrap"><div id="map" aria-label="Selected disaster and personal evacuation route map"></div><div class="map-instruction" id="map-instruction" hidden>Choose your starting point on the map. Esc to cancel.</div><div class="map-prompt" id="map-prompt"><span data-icon="pin"></span><strong>Set your starting point</strong><p>Use GPS or tap the map.</p></div><div class="map-watermark" id="map-watermark">FICTIONAL DEMO</div><div class="map-key"><span><i class="legend-hazard" id="legend-hazard"></i><span id="legend-label">Flood warning</span></span><span><i class="legend-origin"></i>Your location</span><span><i class="legend-route"></i>Your route</span><span id="demo-road-key"><i class="legend-demo-road"></i>Simulated dry roads <i class="legend-demo-water"></i>Flooded</span></div><div class="comparison-map-key" id="comparison-key" hidden><span><i class="legend-shortest"></i>Shortest · comparison only</span><span><i class="legend-excluded"></i>Excluded by checks</span></div><div class="map-detail" id="map-detail" hidden></div></div>
+      <section id="evacuation-map" class="map-panel panel"><div class="map-toolbar"><div class="map-title"><span data-icon="map"></span><strong id="map-title">Your flood exit plan</strong><span id="map-region">Raleigh</span></div><button class="text-button" id="refresh"><span data-icon="refresh"></span> Refresh conditions</button></div>
+        <div class="navigation-controls"><button class="text-button" id="expand-map" aria-pressed="false">Full screen</button><button class="text-button" id="navigation-overview">Route overview</button></div><div class="map-report-action"><button class="text-button" id="open-report"><span data-icon="alert"></span> Report hazard</button></div><div class="mobile-location-actions"><button class="button secondary" id="map-use-location">Use my location</button><button class="text-button" id="map-pick-location">Tap a starting point</button></div><div class="map-wrap"><div id="map" aria-label="Selected disaster and personal evacuation route map"></div><div class="map-instruction" id="map-instruction" hidden>Choose your starting point on the map. Esc to cancel.</div><div class="map-prompt" id="map-prompt"><span data-icon="pin"></span><strong>Set your starting point</strong><p>Use GPS or tap the map.</p></div><div class="map-watermark" id="map-watermark">FICTIONAL DEMO</div><div class="map-key"><span><i class="legend-hazard" id="legend-hazard"></i><span id="legend-label">Flood warning</span></span><span><i class="legend-origin"></i>Your location</span><span><i class="legend-route"></i>Your route</span><span id="demo-road-key"><i class="legend-demo-road"></i>Simulated dry roads <i class="legend-demo-water"></i>Flooded</span></div><div class="comparison-map-key" id="comparison-key" hidden><span><i class="legend-shortest"></i>Shortest · comparison only</span><span><i class="legend-excluded"></i>Excluded by checks</span></div><div class="map-detail" id="map-detail" hidden></div></div>
         <div class="map-footer"><span><span id="basemap-status">Loading city map…</span><br><span id="map-status">Loading conditions…</span></span><div><button class="text-button" id="reset-map">Reset view</button><button class="text-button" id="save-offline"><span data-icon="download"></span> Save offline</button></div></div>
         <p id="offline-save-status" class="offline-save-status" role="status" aria-live="polite">Save this area before going offline.</p>
       </section>
       <section id="route-result" class="route-result panel" aria-live="polite"><div class="result-empty"><span class="icon-box" data-icon="route"></span><div><h2>Your route will appear here</h2><p>Set a location, then find a route.</p></div></div></section>
+
     </div>
   </section>
 
-  <section class="support-row"><div><span data-icon="volume"></span><div><h2>Need help?</h2><p>Read or listen to your next steps.</p></div><button class="button secondary" id="open-guidance">My guidance <span data-icon="arrow"></span></button></div><div><span data-icon="alert"></span><div><h2>See a blocked road?</h2><p>Add it to the map.</p></div><button class="button secondary" id="open-report">Report hazard <span data-icon="plus"></span></button></div></section>
-  <footer class="app-footer"><span>Planning prototype · Routes and destinations are unverified.</span><span>In an emergency, <a href="tel:911">call 911</a>.</span><button class="text-button" id="methodology">How routes are checked <span data-icon="arrow"></span></button></footer>
+  </div>
+  <div id="view-prepare" role="tabpanel" aria-labelledby="tab-prepare" hidden>
+  <div class="feature-heading"><h2>Prepare ahead</h2><p>Upcoming warnings and your checklist.</p></div>
+  <section class="preparedness-layout" aria-label="Prepare before the disaster">
+    <section class="panel preparedness-panel"><div class="prep-heading"><div><span class="eyebrow">PLAN AHEAD</span><h2>What’s coming?</h2></div><span id="alert-location" class="prep-muted"></span></div><p class="prep-muted" id="alert-freshness">Checking alert times…</p><div id="upcoming-alerts" aria-live="polite"></div><p class="prep-footnote">Issued alert times · updates while open · no background notifications.</p></section>
+    <section class="panel preparedness-panel"><div class="prep-heading"><h2 id="prep-title">Your preparation checklist</h2><button class="text-button" id="prep-reset">Reset checklist</button></div><div class="prep-completion"><progress id="prep-meter" value="0" max="8" aria-label="Checklist completion"></progress><span id="prep-progress"></span></div><details class="prep-disclosure" id="prep-checklist"><summary>Open checklist <span>8 quick steps</span></summary><div id="prep-items"></div></details><p class="prep-footnote">Saved on this device. <a href="https://www.ready.gov/kit" target="_blank" rel="noopener noreferrer">Emergency kit guidance ↗</a> · <a id="prep-source" href="https://www.ready.gov/floods" target="_blank" rel="noopener noreferrer">Disaster preparation ↗</a></p></section>
+  </section>
+
+  </div>
+  <div id="view-updates" role="tabpanel" aria-labelledby="tab-updates" hidden>
+    <div class="feature-heading"><h2>Conditions & updates</h2><p>Recent observations and changes affecting your route.</p></div>
+    <section id="conditions-panel" class="conditions-panel panel" hidden></section>
+    <p class="updates-empty">Choose an area and load conditions to see updates.</p>
+  </div>
+  <footer class="app-footer"><span>In an emergency, <a href="tel:911">call 911</a>.</span><button class="text-button" id="methodology">How routes are checked <span data-icon="arrow"></span></button></footer>
 </main>
 
-<dialog id="guidance-dialog" class="wide-dialog" aria-labelledby="guidance-title">
-  <div class="dialog-heading"><div><span class="eyebrow">YOUR SELECTED DISASTER</span><h2 id="guidance-title">Flood guidance</h2></div><button class="icon-button close-dialog" aria-label="Close guidance">×</button></div>
-  <p class="muted">Understand the displayed warnings in your language. Follow local emergency instructions.</p>
-  <div class="guidance-settings">
-    <label>Guidance language<select id="guidance-language"><option value="en">English</option><option value="es">Español</option></select></label>
-    <label>Narrator<select id="guidance-voice" disabled><option value="">Default voice</option></select></label>
-    <label>Playback speed<select id="guidance-speed"><option value="1">Normal</option><option value="0.85">Slower · 0.85×</option></select></label>
-  </div>
-  <p id="voice-status" class="guidance-hint" role="status">Choose a language for the explanation and narration.</p>
-  <div class="guidance-actions"><button class="button primary" id="generate-brief"><span data-icon="sparkles"></span> Explain my situation</button><button class="button secondary" id="play-brief" disabled><span data-icon="volume"></span> Listen</button><button class="text-button" id="download-brief" hidden>Save text</button></div>
-  <div id="guidance-content" class="brief-content" aria-live="polite">Generate a short explanation of the available information.</div>
-  <audio id="brief-audio" controls hidden aria-label="Spoken guidance"></audio>
-  <details class="guidance-question-panel"><summary>Ask about this warning</summary>
+<button id="open-guidance" class="chat-launcher" aria-controls="guidance-dialog" aria-expanded="false"><span data-icon="sparkles"></span> Ask WayAhead</button>
+<dialog id="guidance-dialog" class="chat-panel" aria-labelledby="guidance-title">
+  <div class="dialog-heading"><div><span class="eyebrow">ASK WAYAHEAD</span><h2 id="guidance-title">Flood guidance</h2></div><button class="icon-button close-dialog" aria-label="Close guidance">×</button></div>
+  <section class="guidance-question-panel"><h3>Ask about this warning</h3>
     <p class="guidance-hint">Type a question or record one. Answers use the selected warning information; they cannot confirm road safety or shelter opening.</p>
     <label for="guidance-question">Your question</label><textarea id="guidance-question" rows="3" maxlength="600" placeholder="What does this warning mean? What information is missing?"></textarea>
+    <button class="button primary wide" id="ask-guidance" disabled>Send question</button>
+    <details class="chat-recording"><summary>Record a question</summary>
     <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Record a question</button><button class="text-button" id="discard-recording" disabled>Discard recording</button></div>
     <p id="recording-status" class="guidance-hint" role="status">Record up to 30 seconds, or type your question.</p>
     <audio id="recording-preview" controls hidden aria-label="Your recorded question"></audio>
     <button class="button secondary" id="transcribe-question" disabled>Transcribe recording</button>
     <p class="guidance-hint">Transcribe sends audio to ElevenLabs. Ask sends the reviewed question and warning information to Gemini. Provider retention policies apply. Avoid personal details; your question is not sent to emergency services.</p>
-    <button class="button primary" id="ask-guidance" disabled>Ask about this warning</button>
+
+    </details>
+  </section>
+  <p class="muted">Understand the displayed warnings in your language. Follow local emergency instructions.</p>
+  <details class="chat-settings"><summary>Language & voice</summary><div class="guidance-settings">
+    <label>Guidance language<select id="guidance-language"><option value="en">English</option><option value="es">Español</option></select></label>
+    <label>Narrator<select id="guidance-voice" disabled><option value="">Default voice</option></select></label>
+    <label>Playback speed<select id="guidance-speed"><option value="1">Normal</option><option value="0.85">Slower · 0.85×</option></select></label>
+  </div>
   </details>
+  <p id="voice-status" class="guidance-hint" role="status">Choose a language for the explanation and narration.</p>
+  <div class="guidance-actions"><button class="button primary" id="generate-brief"><span data-icon="sparkles"></span> Explain my situation</button><button class="button secondary" id="play-brief" disabled><span data-icon="volume"></span> Listen</button><button class="text-button" id="download-brief" hidden>Save text</button></div>
+  <div id="guidance-content" class="brief-content" aria-live="polite">Generate a short explanation of the available information.</div>
+  <audio id="brief-audio" controls hidden aria-label="Spoken guidance"></audio>
+
 </dialog>
-<dialog id="report-dialog" aria-labelledby="report-title"><form id="report-form"><div class="dialog-heading"><div><span class="eyebrow">LOCAL OBSERVATION</span><h2 id="report-title">Report a hazard</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close report">×</button></div><p class="muted">Reports stay in this app, remain unverified, and expire after 6 hours. They are not sent to emergency services.</p><label>What are you seeing?<select id="report-kind"><option value="flooded_road">Flooded road</option><option value="fallen_tree">Fallen tree</option><option value="blocked_road">Blocked road</option><option value="heat_concern">Heat concern</option></select></label><button type="button" class="text-button" id="pick-report-location"><span data-icon="pin"></span> Choose report location on map</button><div class="coordinate-fields"><label>Latitude<input id="report-lat" type="number" step="any" required min="-90" max="90"></label><label>Longitude<input id="report-lon" type="number" step="any" required min="-180" max="180"></label></div><label>Observation<textarea id="report-description" rows="4" minlength="5" maxlength="600" required placeholder="Describe what you observed. Avoid personal information."></textarea></label><p id="report-error" class="form-error" role="alert"></p><div class="dialog-actions"><span id="report-mode" class="tag">DEMO REPORT</span><button type="submit" class="button primary">Submit observation</button></div></form></dialog>
+<dialog id="report-dialog" aria-labelledby="report-title"><form id="report-form"><div class="dialog-heading"><div><span class="eyebrow">LOCAL OBSERVATION</span><h2 id="report-title">Report a hazard</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close report">×</button></div><p class="muted">Reports stay in this app, remain unverified, and expire after 6 hours. They are not sent to emergency services.</p><label>What are you seeing?<select id="report-kind"><option value="flooded_road">Flooded road</option><option value="fallen_tree">Fallen tree</option><option value="blocked_road">Blocked road</option><option value="heat_concern">Heat concern</option></select></label><label>Where is the hazard?</label><div class="report-location-actions"><button type="button" class="button secondary" id="report-use-location">Use my location</button><button type="button" class="button secondary" id="pick-report-location">Choose on map</button></div><p id="report-location-status" class="report-location-status" role="status">Choose where you saw the hazard.</p><label>Observation<textarea id="report-description" rows="4" minlength="5" maxlength="600" required placeholder="Describe what you observed. Avoid personal information."></textarea></label><p id="report-error" class="form-error" role="alert"></p><div class="dialog-actions"><span id="report-mode" class="tag">DEMO REPORT</span><button type="submit" class="button primary">Submit observation</button></div></form></dialog>
 <dialog id="info-dialog" class="wide-dialog" aria-labelledby="info-title"><div class="dialog-heading"><div><span class="eyebrow">THE INFORMATION BEHIND YOUR ROUTE</span><h2 id="info-title">Data & help</h2></div><button class="icon-button close-dialog" aria-label="Close information">×</button></div><div id="info-content"></div></dialog>
+<nav class="emergency-dock" aria-label="Emergency shortcuts"><a href="#evacuation-map">Map</a><a href="#route-settings">Options</a><button id="quick-route" class="button primary">Set location</button></nav>
 <div class="toast" id="toast" role="status" hidden></div>
 </body></html>

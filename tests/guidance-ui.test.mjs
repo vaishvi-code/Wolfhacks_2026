@@ -6,7 +6,7 @@ function setup(t,getUserMedia) {
   const nodes=new Map();
   class Element extends EventTarget {
     value='';textContent='';hidden=false;disabled=false;src='';
-    pause(){} removeAttribute(name){delete this[name];}setAttribute(name,value){this[name]=value;}
+    pause(){} focus(){} removeAttribute(name){delete this[name];}setAttribute(name,value){this[name]=value;}
   }
   const element=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
   class Recorder {

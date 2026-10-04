@@ -60,7 +60,7 @@ export async function checkApis({env=process.env,fetchImpl=fetch,poolFactory}={}
         const extension=await pool.query("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'");
         if(!extension.rows.length)return result('Tiger Data','failed','Connected to PostgreSQL, but TimescaleDB is not enabled in this database.');
         const schema=await pool.query("SELECT to_regclass('public.sensor_readings') AS readings, to_regclass('public.sensor_hourly') AS hourly");
-        if(!schema.rows[0]?.readings||!schema.rows[0]?.hourly)return result('Tiger Data','verified-access','Database connection and TimescaleDB verified. Restart the app to initialize its schema, then verify sensor delivery.');
+        if(!schema.rows[0]?.readings||!schema.rows[0]?.hourly)return result('Tiger Data',sslmode==='no-verify'?'encrypted-unverified':'verified-access',`Database connection and TimescaleDB verified.${sslmode==='no-verify'?' Server certificate verification is disabled.':''} Restart the app to initialize its schema, then verify sensor delivery.`);
         const readings=await pool.query('SELECT COUNT(*) AS count, MAX(observed_at) AS latest FROM public.sensor_readings');
         const security=sslmode==='no-verify'?' encrypted but server certificate verification is disabled for the free service.':'';
         return result('Tiger Data',sslmode==='no-verify'?'encrypted-unverified':'verified-access',`Database and app schema are accessible; ${readings.rows[0].count} stored observations.${security} Inspect Data & help after a live refresh to confirm current delivery.`);
@@ -78,7 +78,7 @@ export async function checkApis({env=process.env,fetchImpl=fetch,poolFactory}={}
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
-  console.log('TerraWatch API setup check — no text/audio generation or database writes.');
+  console.log('WayAhead API setup check — no text/audio generation or database writes.');
   const checks=await checkApis();
   for(const {service,status,detail} of checks)console.log(`\n${service}: ${status}\n  ${detail}`);
   console.log('\nKeys and database URLs are never printed. Restart the app after changing .env.');

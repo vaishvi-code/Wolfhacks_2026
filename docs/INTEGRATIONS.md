@@ -91,7 +91,7 @@ Bridge request contract:
 }
 ```
 
-Your bridge must authenticate the caller, validate this schema, durably enqueue or write the records into your Databricks ingestion architecture, deduplicate by `event_id`, and only then return a 2xx response. TerraWatch retries failed deliveries from its local log. A network timeout after acknowledgement can resend a batch, so receiver-side deduplication is required. No generic Databricks delivery is claimed or tested without that bridge.
+Your bridge must authenticate the caller, validate this schema, durably enqueue or write the records into your Databricks ingestion architecture, deduplicate by `event_id`, and only then return a 2xx response. WayAhead retries failed deliveries from its local log. A network timeout after acknowledgement can resend a batch, so receiver-side deduplication is required. No generic Databricks delivery is claimed or tested without that bridge.
 
 ## Census ACS
 

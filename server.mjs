@@ -11,6 +11,7 @@ import {REGIONS,POLL_MS} from './lib/config.mjs';
 import {validCoordinate,pointInGeometry,bboxGeometry} from './lib/geo.mjs';
 import {planRoute} from './lib/routing.mjs';
 import {planEvacuation,evacuationIncidents,HAZARDS} from './lib/evacuation.mjs';
+import {segmentDistanceKm} from './lib/geo.mjs';
 import {generateBrief,speech,integrationStatus,StreamSinks} from './lib/integrations.mjs';
 import {guidanceOptions,listVoices,transcribeRecording,MAX_RECORDING_BYTES,AUDIO_TYPES} from './lib/voice.mjs';
 
@@ -38,7 +39,7 @@ const server=http.createServer(async(req,res)=>{
   res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
   try{
     const url=new URL(req.url,'http://localhost'),path=url.pathname;
-    if(req.method==='GET'&&path==='/api/health')return send(res,200,{ok:true,name:'TerraWatch',time:new Date().toISOString()});
+    if(req.method==='GET'&&path==='/api/health')return send(res,200,{ok:true,name:'WayAhead',time:new Date().toISOString()});
     if(req.method==='GET'&&path==='/api/config')return send(res,200,{regions:Object.values(REGIONS),pollMs:POLL_MS,integrations:integrationStatus(sinks.tiger,sinks.databricks)});
     if(req.method==='GET'&&['/api/snapshot','/api/offline'].includes(path)){
       const {region,mode}=context(url);return send(res,200,await service.snapshot(region,mode,path==='/api/offline'));
@@ -73,7 +74,29 @@ const server=http.createServer(async(req,res)=>{
         if(!validCoordinate(body.coordinates)||!pointInGeometry(body.coordinates,bboxGeometry(REGIONS[region].bbox)))throw error('Choose a report location inside the selected map area.');
         if(typeof body.description!=='string'||body.description.trim().length<5||body.description.length>600)throw error('Describe the observation in 5–600 characters.');
         const report={id:randomUUID(),region,mode,kind:body.kind,coordinates:body.coordinates,description:body.description.trim(),status:'unverified',createdAt:new Date().toISOString(),expires:new Date(Date.now()+6*3600000).toISOString()};
-        store.addReport(report);return send(res,201,report);
+        store.addReport(report);sinks.deliverEvents().catch(()=>{});return send(res,201,report);
+      }
+      if(path==='/api/demo-reset'){
+        if(mode!=='demo')throw error('Only simulated demo closures can be reset.');
+        const resolved=store.resolveDemoEvents(region);await sinks.conditions(REGIONS[region],'demo');
+        return send(res,200,{resolved,snapshot:await service.snapshot(region,'demo')});
+      }
+      if(path==='/api/demo-closure'){
+        if(mode!=='demo')throw error('Simulated closures are only available in demo mode.');
+        if(!validCoordinate(body.start)||!pointInGeometry(body.start,bboxGeometry(REGIONS[region].bbox))||!HAZARDS.includes(body.hazard))throw error('Choose a demo route first.');
+        const snapshot=await service.snapshot(region,'demo',true);
+        const plan=planEvacuation(snapshot,body),route=plan.alternatives[0];
+        if(!route)throw error('No current route is available to demonstrate a closure.',422);
+        // Pick an interior segment away from both access points. Recalculate the
+        // route on the server; a client cannot submit an invented road geometry.
+        const points=route.geometry.coordinates;
+        const segments=points.slice(1).map((p,i)=>({a:points[i],b:p})).filter(s=>segmentDistanceKm(route.access.start,s.a,s.b)>.15&&segmentDistanceKm(route.access.end,s.a,s.b)>.15);
+        if(!segments.length)throw error('Choose a longer demo route to demonstrate a closure.',422);
+        const segment=segments[Math.floor(segments.length/2)],coordinates=segment.a.map((n,i)=>(n+segment.b[i])/2);
+        const report={id:randomUUID(),region,mode:'demo',kind:'blocked_road',coordinates,description:'Simulated closure added to the previously suggested road route.',status:'unverified',simulation:true,createdAt:new Date().toISOString(),expires:new Date(Date.now()+10*60000).toISOString()};
+        store.addReport(report);
+        const conditions=await sinks.conditions(REGIONS[region],'demo');
+        return send(res,201,{event:report,storage:conditions.source,snapshot:await service.snapshot(region,'demo'),message:'Simulated closure recorded. Recalculate your route.'});
       }
       if(path==='/api/route'){
         const snapshot=await service.snapshot(region,mode,true),destination=snapshot.facilities.find(f=>f.id===body.destinationId);
@@ -106,7 +129,7 @@ const server=http.createServer(async(req,res)=>{
     if(path.startsWith('/api/'))throw error('API endpoint not found.',404);
     if(req.method!=='GET'&&req.method!=='HEAD')throw error('Method not allowed.',405);
     let file;
-    if(['/shared/routing.mjs','/shared/geo.mjs','/shared/evacuation.mjs'].includes(path))file=resolve(root,'lib',path.split('/').at(-1));
+    if(['/shared/routing.mjs','/shared/geo.mjs','/shared/evacuation.mjs','/shared/route-events.mjs'].includes(path))file=resolve(root,'lib',path.split('/').at(-1));
     else{file=resolve(publicRoot,'.'+decodeURIComponent(path==='/'?'/index.html':path));if(!file.startsWith(publicRoot+sep))throw error('Not found.',404);}
     const info=await stat(file).catch(()=>null);if(!info?.isFile())throw error('Not found.',404);
     if(extname(file)==='.pmtiles'){
@@ -123,7 +146,7 @@ const server=http.createServer(async(req,res)=>{
 server.requestTimeout=95000;server.headersTimeout=15000;
 const timer=setInterval(()=>{for(const region of service.activeRegions)service.refresh(region).catch(()=>{});for(const [id,b]of briefs)if(Date.now()-b.createdAt>3600000)briefs.delete(id);for(const [id,l]of limits)if(Date.now()-l.start>120000)limits.delete(id);},POLL_MS);
 const port=Number(process.env.PORT)||4173,host=process.env.HOST||'127.0.0.1';
-server.listen(port,host,()=>{console.log(`TerraWatch running at http://${host}:${port}`);sinks.init().catch(()=>{});if(process.env.DISABLE_POLL!=='1')service.refresh('raleigh').catch(()=>{});});
+server.listen(port,host,()=>{console.log(`WayAhead running at http://${host}:${port}`);sinks.init().catch(()=>{});if(process.env.DISABLE_POLL!=='1')service.refresh('raleigh').catch(()=>{});});
 if(process.env.DISABLE_POLL==='1')clearInterval(timer);
 function shutdown(){clearInterval(timer);server.close(()=>{store.close();sinks.pool?.end().finally(()=>process.exit(0));if(!sinks.pool)process.exit(0);});server.closeAllConnections();}
 process.on('SIGINT',shutdown);process.on('SIGTERM',shutdown);

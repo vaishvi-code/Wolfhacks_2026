@@ -1,5 +1,6 @@
 export function initGuidance({state,api,context,toast,download}) {
   const $=id=>document.getElementById(id);
+  $('guidance-dialog').addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();$('guidance-dialog').close();}});
   let answerVersion=0,generating=false,voicesLoaded=false,loadingVoices=false,audioUrl;
   let recorder,stream,chunks=[],recording,recordingUrl,clock,deadline,startedAt,captureVersion=0,requestingMic=false;
   let transcribing=false,transcriptionController,questionVersion=0;
@@ -65,7 +66,7 @@ export function initGuidance({state,api,context,toast,download}) {
     finally{if(version===answerVersion){generating=false;sync();}}
   }
   $('open-guidance').onclick=()=>{
-    $('guidance-dialog').showModal();loadVoices();
+    if(!$('guidance-dialog').open)$('guidance-dialog').show();$('open-guidance').hidden=true;$('open-guidance').setAttribute('aria-expanded','true');loadVoices();
     if(!supported())status('Recording is unavailable in this browser. You can type a question.');
   };
   $('generate-brief').onclick=()=>generate();
@@ -74,7 +75,7 @@ export function initGuidance({state,api,context,toast,download}) {
   $('guidance-language').onchange=()=>{clearAnswer();discard();};
   $('guidance-voice').onchange=stopAudio;
   $('guidance-speed').onchange=()=>{$('brief-audio').playbackRate=Number($('guidance-speed').value);};
-  $('download-brief').onclick=()=>{if(state.brief)download(`terrawatch-${state.hazard}-guidance.txt`,state.brief.text);};
+  $('download-brief').onclick=()=>{if(state.brief)download(`wayahead-${state.hazard}-guidance.txt`,state.brief.text);};
   $('play-brief').onclick=async()=>{
     if(!state.brief)return;const brief=state.brief,version=answerVersion,voiceId=$('guidance-voice').value;
     stopAudio();
@@ -131,7 +132,7 @@ export function initGuidance({state,api,context,toast,download}) {
     }catch(error){if(version===captureVersion)status(error.name==='AbortError'?'Transcription cancelled.':error.message);}
     finally{if(version===captureVersion){transcribing=false;sync();}}
   };
-  $('guidance-dialog').addEventListener('close',()=>{discard();stopAudio();answerVersion++;generating=false;sync();});
+  $('guidance-dialog').addEventListener('close',()=>{$('open-guidance').hidden=false;$('open-guidance').setAttribute('aria-expanded','false');$('open-guidance').focus();discard();stopAudio();answerVersion++;generating=false;sync();});
   window.addEventListener('pagehide',()=>{discard();stopAudio();});
   sync();return {reset};
 }

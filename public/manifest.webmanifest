@@ -1,12 +1,12 @@
 {
-  "name": "TerraWatch · Your way out",
-  "short_name": "TerraWatch",
+  "name": "WayAhead · Your way out",
+  "short_name": "WayAhead",
   "description": "Personal evacuation planner for North Carolina hurricanes, floods, and heat emergencies.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f4f6f0",
-  "theme_color": "#176450",
+  "background_color": "#f5f5f5",
+  "theme_color": "#cc0000",
   "categories": ["utilities", "navigation"],
   "icons": [
     {
