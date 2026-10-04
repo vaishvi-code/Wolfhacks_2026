@@ -120,7 +120,7 @@ const server=http.createServer(async(req,res)=>{
       if(path==='/api/brief'){
         const options=guidanceOptions(body);
         const snapshot=await service.snapshot(region,mode);
-        snapshot.areaContext=areaContext.peek(REGIONS[region]);
+        snapshot.areaContext=await areaContext.forChat(REGIONS[region],{question:options.question,enabled:!!process.env.GEMINI_API_KEY});
         if(body.hazard){if(!HAZARDS.includes(body.hazard))throw error('Choose a valid disaster.');snapshot.incidents=evacuationIncidents(snapshot,body.hazard).filter(i=>i.category===body.hazard);snapshot.selectedHazard=body.hazard;}
         const result=await generateBrief(snapshot,options);const id=randomUUID();
         briefs.set(id,{...result,createdAt:Date.now()});return send(res,200,{...result,id});

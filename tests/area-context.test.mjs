@@ -6,6 +6,16 @@ import {REGIONS} from '../lib/config.mjs';
 import {areaContextCards} from '../public/area-context.js';
 
 const collection=properties=>({type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Point',coordinates:[-78.6,35.7]},properties}]});
+test('chat loads area data without a manual Updates visit, including non-English questions',async()=>{
+  const store=new Store(':memory:');try{
+    let calls=0;
+    const area=new AreaContext(store,{apiKey:'',fetchImpl:async()=>{calls++;return collection({});}});
+    assert.equal(await area.forChat(REGIONS.raleigh,{question:'What APIs do you use?',enabled:false}),null);assert.equal(calls,0);
+    const result=await area.forChat(REGIONS.raleigh,{question:'Quels jeux de données utilisez-vous ?',enabled:true});assert.equal(result.region,'raleigh');assert.equal(calls,3);
+    await area.forChat(REGIONS.raleigh,{question:'What does EPA provide?',enabled:true});assert.equal(calls,3);
+    await area.forChat(REGIONS.asheville,{question:'What datasets are available?',enabled:true});assert.equal(calls,6);
+  }finally{store.close();}
+});
 test('area sources use bounded city queries, sanitize fields, cache requests and keep secrets out of evidence',async()=>{
   const store=new Store(':memory:');try{
     const calls=[];const area=new AreaContext(store,{apiKey:'PRIVATE-KEY',fetchImpl:async(url,options)=>{

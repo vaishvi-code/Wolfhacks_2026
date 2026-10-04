@@ -3,6 +3,18 @@ import assert from 'node:assert/strict';
 import {guidanceOptions,listVoices,resolveVoice,transcribeRecording,MAX_RECORDING_BYTES} from '../lib/voice.mjs';
 import {generateBrief,speech} from '../lib/integrations.mjs';
 
+test('API questions receive integration capabilities and actual reference datasets instead of a warning-only prompt',async t=>{
+  env(t,{GEMINI_API_KEY:'test',DATA_GOV_API_KEY:'PRIVATE-API-KEY'});
+  const snapshot=demoSnapshot();snapshot.areaContext={region:snapshot.region.id,checkedAt:new Date().toISOString(),flood:{source:{name:'NC OneMap',status:'cached'},data:{features:[{properties:{zone:'AE'}}],partial:true}},tracts:{source:{name:'Census TIGERweb',status:'cached'},data:{features:[{properties:{name:'1',geoid:'37183000100'}}]}},epa:{source:{name:'EPA ECHO',status:'cached'},data:{features:[{properties:{name:'Example facility',id:'123'}}],partial:true}},catalog:{source:{name:'Data.gov',status:'live'},data:[{title:'Flood dataset',url:'https://catalog.data.gov/dataset/flood-data'}]}};
+  t.mock.method(globalThis,'fetch',async(url,options)=>{
+    const body=JSON.parse(options.body),{evidence}=JSON.parse(body.contents[0].parts[0].text);
+    assert.ok(evidence.apiCapabilities.some(api=>api.name==='Data.gov'&&api.configured));assert.equal(evidence.areaContext.datasets[0].title,'Flood dataset');assert.equal(evidence.areaContext.facilities[0].name,'Example facility');
+    assert.ok(!options.body.includes('PRIVATE-API-KEY'));assert.match(body.systemInstruction.parts[0].text,/Use apiCapabilities/);assert.ok(!body.systemInstruction.parts[0].text.includes('Answer the question about the selected warning'));
+    return json({candidates:[{content:{parts:[{text:'Data.gov discovers relevant datasets; EPA ECHO lists environmental facilities.'}]}}]});
+  });
+  const result=await generateBrief(snapshot,{language:'en',question:'What do the new APIs do?'});assert.equal(result.ai,true);
+});
+
 test('Gemini receives Tiger measurements and report history for the selected hazard',async t=>{
   env(t,{GEMINI_API_KEY:'test'});const snapshot=demoSnapshot();snapshot.mode='live';snapshot.selectedHazard='flood';
   const time=new Date().toISOString();snapshot.conditions={source:'tiger',status:'connected',checkedAt:time,trend:{status:'insufficient_history',latestFt:3,observedAt:time,points:[{time,value:3}]},hourly:[{bucket:time,average_ft:3,min_ft:2,max_ft:4,observations:4}],events:[{region:snapshot.region.id,mode:'live',kind:'blocked_road',description:'Observed blockage',status:'unverified',createdAt:time,expires:new Date(Date.now()+60000).toISOString()}]};
