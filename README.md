@@ -119,3 +119,7 @@ Current data connectors use NOAA/NWS, USGS, OSM/Overpass, and optionally Census.
 Reports remain local to this server and are not sent to emergency services. Exact user GPS locations are used only on request for local route planning. AI does not select routes or change risk calculations. See [architecture and methods](docs/ARCHITECTURE.md), [API reference](docs/API.md), and [demo script](docs/DEMO.md).
 
 Sources: [NWS API](https://www.weather.gov/documentation/services-web-api), [USGS modernization](https://api.waterdata.usgs.gov/docs/ogcapi/migration/), [Overpass QL](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL), [Census ACS API](https://api.census.gov/data/2024/acs/acs5/examples.html), [Leaflet](https://leafletjs.com/). OSM data and map attribution remain visible. Leaflet's license is included in `public/vendor/LEAFLET-LICENSE`.
+
+## AI Usage
+
+AI-assisted coding tools, including ChatGPT and OpenAI Codex, were used to assist with code implementation. All AI-assisted code was reviewed and validated by the team before being included in the project.
