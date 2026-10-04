@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "attribution": "© OpenStreetMap contributors",
+  "regions": {
+    "raleigh": {
+      "file": "raleigh.json.gz",
+      "fetchedAt": "2026-10-04T00:24:45.829Z",
+      "bbox": [
+        -78.7182,
+        35.7196,
+        -78.5582,
+        35.8396
+      ],
+      "bytes": 2670198,
+      "sha256": "188d5a6ffd3faf2c04abb39aced26ce26480c6afa28c6e450f032c6d3e74413e",
+      "nodes": 118778,
+      "edges": 128310,
+      "facilities": 130
+    },
+    "wilmington": {
+      "file": "wilmington.json.gz",
+      "fetchedAt": "2026-10-04T03:13:07.642Z",
+      "bbox": [
+        -78.0247,
+        34.1657,
+        -77.8647,
+        34.2857
+      ],
+      "bytes": 1342959,
+      "sha256": "2d1006350f541db17b207e167101db2be318fea6b79f6a3370e6f76feb0ab32c",
+      "nodes": 62737,
+      "edges": 68707,
+      "facilities": 23
+    },
+    "asheville": {
+      "file": "asheville.json.gz",
+      "fetchedAt": "2026-10-04T04:43:33.953Z",
+      "bbox": [
+        -82.6315,
+        35.5351,
+        -82.4715,
+        35.6551
+      ],
+      "bytes": 2167634,
+      "sha256": "5565cc407cbbe01ae4fdbff0893fb4acad5aae3eb4e08510ff9b2213ccb55f65",
+      "nodes": 102320,
+      "edges": 106984,
+      "facilities": 55
+    }
+  }
+}

@@ -73,7 +73,8 @@ function renderStatus(){
   const realStreets=s.roadInfo?.basis==='osm';
   $('mode-banner').innerHTML=state.mode==='demo'?`${icon('flask')} <span><strong>Demo</strong> · ${realStreets?'Real streets, fictional conditions.':'Fictional grid · real street data unavailable.'}</span>`:`${icon('shield')} <span><strong>${state.offline?'Saved offline alerts':'Live alerts'}</strong> · ${count?count+' matching warning'+(count===1?'':'s'):'No matching warning returned.'} Follow official directions.</span>`;
   $('map-watermark').textContent=realStreets?'SIMULATED DISASTER':'FICTIONAL DEMO';
-  $('map-region').textContent=s.region.name;$('map-status').textContent=`${state.offline?'Saved routing data · '+(realStreets?'real streets':'fictional roads'):realStreets?`${s.roadInfo.segments.toLocaleString()} OSM road segments`:'Illustrative roads'} · ${formatTime(realStreets?s.roadInfo.fetchedAt:s.fetchedAt)}${state.mode==='live'?' · road conditions unverified':''}`;
+  const roadDate=realStreets&&s.roadInfo.fetchedAt?new Date(s.roadInfo.fetchedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):formatTime(s.fetchedAt);
+  $('map-region').textContent=s.region.name;$('map-status').textContent=`${state.offline?'Saved routing data · '+(realStreets?'real streets':'fictional roads'):s.roadInfo?.bundled?'Bundled real streets':realStreets?`${s.roadInfo.segments.toLocaleString()} OSM road segments`:'Illustrative roads'} · ${roadDate}${state.mode==='live'?' · road conditions unverified':''}`;
   if(state.offline&&s.offlineSavedAt)$('offline-save-status').textContent=`Offline · ${s.region.name} · ${s.mode} conditions saved ${formatTime(s.offlineSavedAt)}. Warnings will not update without internet.`;
   updateControls();
 }

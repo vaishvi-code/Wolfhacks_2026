@@ -50,7 +50,7 @@ test('OSM outage keeps an explicitly fictional fallback and unsuccessful source 
 
 test('service uses real streets in normal and offline demo responses',async()=>{
   const store=new Store(':memory:');try{
-    const service=new DisasterService(store,undefined,{demoRoads:'real'}),{osm}=fixture();service.providers.osm=async()=>osm;
+    const service=new DisasterService(store,undefined,{demoRoads:'real',roadPackLoader:async()=>null}),{osm}=fixture();service.providers.osm=async()=>osm;
     const small=await service.snapshot('raleigh','demo'),pack=await service.snapshot('raleigh','demo',true);
     assert.equal(small.roads,undefined);assert.equal(small.roadInfo.basis,'osm');assert.equal(small.roadInfo.segments,4);assert.equal(pack.roads.edges.length,4);assert.equal(pack.facilities[0].id,'osm-test');
   }finally{store.close();}

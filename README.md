@@ -61,6 +61,8 @@ lib/
   integrations.mjs     Gemini, ElevenLabs, Tiger and optional ingest bridge
   voice.mjs            Voice allowlist, bounded transcription, guidance options
   demo.mjs             Explicitly fictional, region-specific scenarios
+  bundled-roads.mjs    Verified local OSM pack loader with original timestamps
+  road-packs/          Bundled real routing networks for all three cities
 public/
   index.html           Accessible application interface
   styles.css           Responsive desktop and mobile layout
