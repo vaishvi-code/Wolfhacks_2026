@@ -16,7 +16,7 @@ node --env-file-if-exists=.env server.mjs
 
 Open **http://127.0.0.1:4173**. On Windows you can also run `./start.ps1`. With npm installed, `npm start` is equivalent.
 
-The first load downloads OSM roads and resources and may take 15–65 seconds. The server caches provider responses in `data/terrawatch.sqlite`. Coverage presets: **Raleigh, Wilmington, Asheville**. If OSM is unavailable with no cached graph, the demo falls back to a visibly labeled fictional grid. Set `DEMO_ROADS=synthetic` for an entirely fictional, network-free walkthrough. Live data never falls back to invented roads or warnings.
+The first load downloads OSM roads and resources and may take 15–65 seconds. The server caches provider responses in `data/terrawatch.sqlite`. Coverage presets: **Raleigh, Wilmington, Asheville**. If OSM is unavailable with no cached graph, the demo displays a visibly labeled fictional grid, but normal app routing and offline saving are blocked until real streets are available. Set `DEMO_ROADS=synthetic` for an entirely fictional, network-free walkthrough. Live data never falls back to invented roads or warnings.
 
 For optional integrations, copy `.env.example` to `.env`, fill only the settings you need, and restart. Never place keys in `public/` or commit `.env`.
 
@@ -33,7 +33,7 @@ Copy-Item .env.example .env
 - **USGS** gage-height observations and historical trends. The server polls every 60 seconds and uses **Server-Sent Events** to update the browser. Observations retain their actual sensor timestamps; polling does not fabricate new observations.
 - **OpenStreetMap / Overpass** roads and facilities, including hospitals, clinics, libraries, community facilities, and fire stations. No facility is declared an open shelter or cooling center without verification.
 - **Census ACS** optional county population context with margin of error and vintage. A county total is never displayed as the number exposed to a hazard.
-- **Destination suggestions** compare eligible resources outside checked warnings and return up to three reachable alternatives ranked by road distance × warning-exposure costs. You can also choose a specific resource.
+- **Destination suggestions** compare eligible resources outside checked warnings and return up to three reachable alternatives ranked by least mapped hazard exposure, then road distance. You can also choose a specific resource.
 - **Shortest-route comparison** uses the same start and destination road access points and retains one-way driving restrictions. It removes hazard restrictions only for an explanatory baseline. Excluded sections appear red when the comparison overlay is enabled. The baseline cannot be selected or exported as the suggested route. Identical results are disclosed rather than claiming an improvement.
 - **Risk-weighted graph routing** with one-way roads, exclusions for major flood-warning footprints, and higher costs for wind and heat exposure. Live plans also check other known warnings, while the map remains focused on the selected disaster. Reports create temporary local exclusions. Routes cannot re-enter the selected warning after exiting. This is a planning prototype, not evacuation navigation.
 - Clear results for **no warning, no usable exit, no outside destination, missing boundaries, and stale data**. An origin outside the warning gets a resource-access route without implying a need to evacuate. Demo flood exits have an explicitly fictional dry corridor that is never permitted for live data.
