@@ -1,1 +1,40 @@
-{"name":"TerraWatch · Your way out","short_name":"TerraWatch","start_url":"/","display":"standalone","background_color":"#f4f6f0","theme_color":"#176450","icons":[{"src":"/icons/logo.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
+{
+  "name": "TerraWatch · Your way out",
+  "short_name": "TerraWatch",
+  "description": "Personal evacuation planner for North Carolina hurricanes, floods, and heat emergencies.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6f0",
+  "theme_color": "#176450",
+  "categories": ["utilities", "navigation"],
+  "icons": [
+    {
+      "src": "/icons/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Plan Evacuation",
+      "short_name": "Evacuate",
+      "description": "Plan your evacuation route",
+      "url": "/?shortcut=evacuate"
+    }
+  ]
+}
