@@ -98,21 +98,21 @@
     <button class="button primary wide" id="ask-guidance" disabled>Send question</button>
     <details class="chat-recording"><summary>Record a question</summary>
     <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Record a question</button><button class="text-button" id="discard-recording" disabled>Discard recording</button></div>
-    <p id="recording-status" class="guidance-hint" role="status">Record up to 30 seconds, or type your question.</p>
+
     <audio id="recording-preview" controls hidden aria-label="Your recorded question"></audio>
-    <button class="button secondary" id="transcribe-question" disabled>Transcribe recording</button>
-    <p class="guidance-hint">Transcribe sends audio to ElevenLabs. Ask sends the reviewed question and warning information to Gemini. Provider retention policies apply. Avoid personal details; your question is not sent to emergency services.</p>
+
+    <p class="guidance-hint">After you stop, your recording is sent to ElevenLabs for automatic language detection and transcription. Send question sends the reviewed text and warnings to Gemini. Provider retention policies apply. Avoid personal details; your question is not sent to emergency services.</p>
 
     </details>
   </section>
   <p class="muted">Understand the displayed warnings in your language. Follow local emergency instructions.</p>
-  <details class="chat-settings"><summary>Language & voice</summary><div class="guidance-settings">
-    <label>Guidance language<select id="guidance-language"><option value="en">English</option><option value="es">Español</option></select></label>
+  <details class="chat-settings"><summary>Voice settings</summary><div class="guidance-settings">
+    <label>Guidance language<select id="guidance-language"><option value="auto" selected>Automatic</option><option value="en">English</option><option value="es">Español</option></select></label>
     <label>Narrator<select id="guidance-voice" disabled><option value="">Default voice</option></select></label>
     <label>Playback speed<select id="guidance-speed"><option value="1">Normal</option><option value="0.85">Slower · 0.85×</option></select></label>
   </div>
   </details>
-  <p id="voice-status" class="guidance-hint" role="status">Choose a language for the explanation and narration.</p>
+  <p id="voice-status" class="guidance-hint" role="status">Your language is detected automatically.</p>
   <div class="guidance-actions"><button class="button primary" id="generate-brief"><span data-icon="sparkles"></span> Explain my situation</button><button class="button secondary" id="play-brief" disabled><span data-icon="volume"></span> Listen</button><button class="text-button" id="download-brief" hidden>Save text</button></div>
   <div id="guidance-content" class="brief-content" aria-live="polite">Generate a short explanation of the available information.</div>
   <audio id="brief-audio" controls hidden aria-label="Spoken guidance"></audio>

@@ -12,9 +12,10 @@ export function initGuidance({state,api,context,toast,download}) {
     $('generate-brief').disabled=busy;
     $('ask-guidance').disabled=busy||!$('guidance-question').value.trim()||!state.config?.integrations.gemini.configured;
     $('record-question').disabled=!supported()||!state.config?.integrations.elevenlabs.keyConfigured||generating||requestingMic||transcribing;
-    $('record-question').textContent=active()?'Stop recording':'Record a question';
+    $('record-question').textContent=active()?'Stop recording':'🎙 Speak';
     $('record-question').setAttribute('aria-pressed',String(!!active()));
     $('transcribe-question').disabled=!recording||busy;
+    $('transcribe-question').hidden=!recording;
     $('discard-recording').disabled=!recording&&!active()&&!requestingMic&&!transcribing;
     $('guidance-language').disabled=active()||requestingMic||transcribing;
   }
@@ -81,7 +82,7 @@ export function initGuidance({state,api,context,toast,download}) {
     stopAudio();
     if(!state.config?.integrations.elevenlabs.keyConfigured){
       if(!window.speechSynthesis){toast('Audio is unavailable in this browser.',true);return;}
-      const utterance=new SpeechSynthesisUtterance(brief.text);utterance.lang=brief.language==='es'?'es-ES':'en-US';utterance.rate=Number($('guidance-speed').value);
+      const utterance=new SpeechSynthesisUtterance(brief.text);utterance.lang=brief.language&&brief.language!=='auto'?brief.language:navigator.language||'en-US';utterance.rate=Number($('guidance-speed').value);
       window.speechSynthesis.speak(utterance);toast('Playing browser voice. ElevenLabs is not configured.');return;
     }
     if(!voiceId&&!state.config.integrations.elevenlabs.configured){toast('Choose an available ElevenLabs voice first.',true);return;}
@@ -111,7 +112,8 @@ export function initGuidance({state,api,context,toast,download}) {
         recording=new Blob(chunks,{type:mime});chunks=[];recorder=null;
         if(!recording.size){discard();status('No audio captured. Try again.');return;}
         recordingUrl=URL.createObjectURL(recording);$('recording-preview').src=recordingUrl;$('recording-preview').hidden=false;
-        status('Recording ready on this device. Preview it, then choose Transcribe recording.');sync();
+        status('Recording ready on this device. Preview it, then choose Use recording.');sync();
+        if($('guidance-language').value==='auto')void $('transcribe-question').onclick();
       };
       recorder.start(250);startedAt=Date.now();status('Recording… 0 / 30 seconds.');sync();
       clock=setInterval(()=>status(`Recording… ${Math.floor((Date.now()-startedAt)/1000)} / 30 seconds.`),1000);
@@ -128,7 +130,7 @@ export function initGuidance({state,api,context,toast,download}) {
       if(version!==captureVersion)return;
       if(edited!==questionVersion){status('Your typed question changed while transcribing. It was kept; transcribe again to replace it.');return;}
       $('guidance-question').value=result.text;questionVersion++;
-      status(`${result.provider}: review and edit the text, then choose Ask about this warning.${result.truncated?' The transcript was shortened to 600 characters.':''}`);
+      status(`${result.language&&result.language!=='auto'?'Language detected: '+result.language+'. ':''}Review and edit the text, then choose Send question.${result.truncated?' The transcript was shortened to 600 characters.':''}`);
     }catch(error){if(version===captureVersion)status(error.name==='AbortError'?'Transcription cancelled.':error.message);}
     finally{if(version===captureVersion){transcribing=false;sync();}}
   };

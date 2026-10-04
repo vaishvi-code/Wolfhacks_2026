@@ -60,7 +60,7 @@ const server=http.createServer(async(req,res)=>{
       if(req.headers['sec-fetch-site']==='cross-site')throw error('Cross-site requests are not allowed.',403);
       rateLimit(req,path);
       if(path==='/api/transcribe'){
-        const type=req.headers['content-type']?.split(';')[0]?.trim(),{language}=guidanceOptions({language:url.searchParams.get('language')||'en'});
+        const type=req.headers['content-type']?.split(';')[0]?.trim(),{language}=guidanceOptions({language:url.searchParams.get('language')||'auto'});
         if(!Object.hasOwn(AUDIO_TYPES,type))throw error('Use a WebM, Ogg, MP4, WAV, or MP3 recording.',415);
         if(Number(req.headers['content-length'])>MAX_RECORDING_BYTES)throw error('Recording exceeds the 2 MB limit.',413);
         let bytes=0;const chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>MAX_RECORDING_BYTES)throw error('Recording exceeds the 2 MB limit.',413);chunks.push(chunk);}

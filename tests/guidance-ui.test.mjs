@@ -34,6 +34,21 @@ test('closing guidance while microphone permission is pending stops late-granted
   assert.equal(stopped,1);assert.equal(element('recording-preview').hidden,true);assert.equal(element('transcribe-question').disabled,true);
 });
 
+test('automatic mic mode transcribes on stop but waits for review before asking Gemini',async t=>{
+  let uploads=0;const {element,requests}=setup(t,async()=>({getTracks:()=>[{stop(){}}]}));
+  element('guidance-language').value='auto';
+  t.mock.method(globalThis,'fetch',async(url)=>{
+    uploads++;assert.equal(url,'/api/transcribe?language=auto');
+    return new Response(JSON.stringify({text:'¿Qué significa esta alerta?',provider:'ElevenLabs Scribe',language:'es'}));
+  });
+  await element('record-question').onclick();await element('record-question').onclick();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(uploads,1);assert.equal(requests.length,0);
+  assert.equal(element('guidance-question').value,'¿Qué significa esta alerta?');
+  assert.match(element('recording-status').textContent,/Language detected: es/);
+  assert.equal(element('ask-guidance').disabled,false);
+});
+
 test('recording requires separate transcription and question actions, and discarding releases its preview',async t=>{
   let stopped=0,uploads=0;const {element,requests}=setup(t,async()=>({getTracks:()=>[{stop:()=>stopped++}]}));
   t.mock.method(globalThis,'fetch',async(url,options)=>{uploads++;assert.match(url,/api\/transcribe/);assert.ok(options.body instanceof Blob);return new Response(JSON.stringify({text:'What is missing?',provider:'ElevenLabs Scribe'}));});

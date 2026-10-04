@@ -2,6 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {guidanceOptions,listVoices,resolveVoice,transcribeRecording,MAX_RECORDING_BYTES} from '../lib/voice.mjs';
 import {generateBrief,speech} from '../lib/integrations.mjs';
+test('automatic transcription omits a language hint and returns the detected language',async t=>{
+  env(t,{ELEVENLABS_API_KEY:'test'});
+  t.mock.method(globalThis,'fetch',async(url,options)=>{
+    assert.equal(options.body.has('language_code'),false);
+    return json({text:'यह चेतावनी क्या है?',language_code:'hin'});
+  });
+  const result=await transcribeRecording(Buffer.from('audio'),'audio/webm','auto');
+  assert.equal(result.language,'hin');assert.match(result.text,/चेतावनी/);
+});
+test('Gemini automatic replies preserve the detected answer language',async t=>{
+  env(t,{GEMINI_API_KEY:'test'});
+  t.mock.method(globalThis,'fetch',async(url,options)=>{
+    const request=JSON.parse(options.body);assert.equal(request.generationConfig.responseMimeType,'application/json');
+    assert.match(request.systemInstruction.parts[0].text,/Detect the language/);
+    return json({candidates:[{content:{parts:[{text:JSON.stringify({text:'Información del escenario.',language:'es'})}]}}]});
+  });
+  const result=await generateBrief(demoSnapshot(),{language:'auto',question:'¿Qué significa esta alerta?'});
+  assert.equal(result.ai,true);assert.equal(result.language,'es');assert.equal(result.text,'Información del escenario.');
+});
 import {demoSnapshot} from '../lib/demo.mjs';
 const json=data=>new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}});
 function env(t,values){for(const [name,value]of Object.entries(values)){const before=process.env[name];process.env[name]=value;t.after(()=>{if(before===undefined)delete process.env[name];else process.env[name]=before;});}}
