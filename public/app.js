@@ -1,6 +1,8 @@
 import {initGuidance} from './guidance.js';
-import {savePack,loadPack} from './offline.js';
+import {savePack,loadPack,loadCityMap,ensureOfflineShell} from './offline.js';
 import {roadFeatures} from './offline-map.js';
+import {createCityBasemap} from './city-map.js';
+import {downloadCityMap,megabytes} from './map-download.js';
 import {requestRoute} from './route-request.js';
 import {initPreparedness} from './preparedness.js';
 import {destinationCandidates,evacuationIncidents,planEvacuation} from '/shared/evacuation.mjs';
@@ -12,17 +14,23 @@ const icon=name=>`<svg class="icon" viewBox="0 0 24 24" width="20" height="20" f
 const hydrate=()=>document.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=icon(el.dataset.icon);});
 const META={flood:{name:'Flood',short:'flood',color:'#32779a',hint:'Explore a route beyond the flood warning. Never drive through floodwater.',url:'https://www.weather.gov/safety/flood-during'},hurricane:{name:'Hurricane',short:'hurricane',color:'#8a679b',hint:'Explore a route beyond the wind warning. Follow official evacuation orders.',url:'https://www.weather.gov/safety/hurricane'},heat:{name:'Extreme heat',short:'heat',color:'#ba7331',hint:'Look for a resource outside the heat warning. Confirm cooling and opening hours.',url:'https://www.weather.gov/safety/heat'}};
 const state={region:'raleigh',mode:'demo',hazard:'flood',snapshot:null,config:null,origin:null,originKind:null,plan:null,routeIndex:0,showComparison:false,offline:false,epoch:0,revision:0,busy:false,picking:null,brief:null,stream:null,fingerprint:''};
+// Reopening offline should return to the area and mode that were downloaded.
+try{const saved=JSON.parse(localStorage.getItem('terrawatch-offline-area')||'null');if(saved&&['raleigh','wilmington','asheville'].includes(saved.region)&&['live','demo'].includes(saved.mode)&&Object.hasOwn(META,saved.hazard)){state.region=saved.region;state.mode=saved.mode;state.hazard=saved.hazard;}}catch{}
+$('region').value=state.region;
 const latlng=p=>[p[1],p[0]],formatTime=value=>value&&Number.isFinite(Date.parse(value))?new Date(value).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'Unavailable';
 const safeUrl=url=>{try{const u=new URL(url);return u.protocol==='https:'?esc(u.href):null;}catch{return null;}};
 const map=L.map('map',{zoomControl:false}).setView([35.7796,-78.6382],12);
-const basemap=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+const basemap=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'});
+let basemapFallback=false;
+const cityBasemap=createCityBasemap(map,{onStatus:message=>{$('basemap-status').textContent=message;},onFallback:failed=>{basemapFallback=failed;if(failed&&!state.offline)basemap.addTo(map);else if(map.hasLayer(basemap))map.removeLayer(basemap);renderOfflineMap();}});
 L.control.zoom({position:'topright'}).addTo(map);
 map.createPane('offlineStreets');map.getPane('offlineStreets').style.zIndex=250;
 const offlineStreets=L.layerGroup().addTo(map),streetRenderer=L.canvas({pane:'offlineStreets',padding:.3});
 let renderedRoads=null;
 function renderOfflineMap(){
-  const graph=state.offline?state.snapshot?.roads:null;
-  if(state.offline){if(map.hasLayer(basemap))map.removeLayer(basemap);}else if(navigator.onLine&&!map.hasLayer(basemap))basemap.addTo(map);
+  const graph=state.offline&&basemapFallback?state.snapshot?.roads:null;
+  if(state.offline&&map.hasLayer(basemap))map.removeLayer(basemap);
+  if(state.snapshot)cityBasemap.update(state.region,state.offline);
   if(graph===renderedRoads)return;
   renderedRoads=graph;offlineStreets.clearLayers();
   if(!graph)return;
@@ -35,9 +43,9 @@ new ResizeObserver(()=>map.invalidateSize()).observe($('map'));
 let toastTimer,guidance,preparedness;
 function toast(message,error=false){$('toast').textContent=message;$('toast').classList.toggle('error',error);$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,5000);}
 async function api(path,body){const r=await fetch(path,{...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(path==='/api/evacuate'?8000:95000)});const data=await r.json();if(!r.ok)throw new Error(data.error||'The request failed.');return data;}
-const context=()=>({region:state.region,mode:state.mode,hazard:state.hazard});
+const context=()=>({region:state.region,mode:state.mode,hazard:state.hazard,minimumClearanceKm:Number($('warning-clearance').value)});
 const selectedWarnings=()=>state.snapshot?evacuationIncidents(state.snapshot,state.hazard).filter(i=>i.category===state.hazard):[];
-const candidates=()=>state.snapshot?destinationCandidates(state.snapshot,state.hazard):[];
+const candidates=()=>state.snapshot?destinationCandidates(state.snapshot,state.hazard,Date.now(),context().minimumClearanceKm):[];
 const selectedRoute=()=>state.plan?.alternatives?.[state.routeIndex];
 function fingerprint(s){return JSON.stringify({incidents:evacuationIncidents(s,state.hazard).map(i=>[i.id,i.geometry,i.score]),roadVersion:s.roadInfo?.basis==='osm'?s.roadInfo?.fetchedAt:null,facilities:s.facilities.map(f=>[f.id,f.coordinates,f.access]),reports:(s.reports||[]).filter(r=>Date.parse(r.expires)>Date.now()),sources:s.sources.filter(s=>/^(nws|osm)-/.test(s.id)).map(s=>[s.id,['live','cached'].includes(s.status)?'available':s.status])});}
 function clearBrief(){guidance?.reset();}
@@ -49,23 +57,24 @@ function updateControls(){
   for(const mode of ['live','demo']){$(`mode-${mode}`).classList.toggle('selected',state.mode===mode);$(`mode-${mode}`).setAttribute('aria-pressed',state.mode===mode);}
   $('use-demo-location').hidden=state.mode!=='demo';$('map-watermark').hidden=state.mode!=='demo';$('hazard-hint').textContent=m.hint;$('map-title').textContent=`Your ${m.short} exit plan`;$('legend-label').textContent=`${m.name} warning`;$('safety-link').href=m.url;$('safety-link').textContent=`Read ${m.short} guidance ↗`;$('guidance-title').textContent=`${m.name} guidance`;
   $('demo-road-key').hidden=state.mode!=='demo'||state.hazard!=='flood';
-  if(state.mode==='demo'&&state.hazard==='flood')$('hazard-hint').textContent='Choose your own point in the blue warning. Green lines are simulated dry roads; red patches are simulated flooding.';
-  $('find-route').disabled=!state.origin||!state.snapshot||state.busy;$('find-route').innerHTML=state.busy?'Comparing routes…':`Find my exit route ${icon('arrow')}`;
+  if(state.mode==='demo'&&state.hazard==='flood')$('hazard-hint').textContent='Demo: green roads are simulated dry roads. Avoid red flooded areas.';
+  $('find-route').disabled=!state.origin||!state.snapshot||state.busy;$('find-route').innerHTML=state.busy?'Comparing routes…':`Find a route ${icon('arrow')}`;
   $('map-prompt').hidden=!!state.origin;$('location-card').classList.toggle('set',!!state.origin);
-  $('location-title').textContent=state.origin?state.originKind==='example'?'Example starting location':state.originKind==='gps'?'Your GPS location':'Your chosen location':'Your location is not set';
-  $('location-coordinates').textContent=state.origin?`${state.origin[1].toFixed(5)}, ${state.origin[0].toFixed(5)}`:'Use GPS or choose a point on the map.';
+  $('location-title').textContent=state.origin?state.originKind==='example'?'Example starting location':state.originKind==='gps'?'Your GPS location':'Your chosen location':'Choose a starting point';
+  $('location-coordinates').textContent=state.origin?`${state.origin[1].toFixed(5)}, ${state.origin[0].toFixed(5)}`:'Use GPS or tap the map.';
   $('location-step-number').classList.toggle('complete',!!state.origin);
   if(state.origin){const inside=selectedWarnings().some(i=>pointInGeometry(state.origin,i.geometry));$('location-status').textContent=inside?`Inside ${state.mode==='demo'?'the example':'a mapped'} ${m.short} warning area.`:'Outside the selected mapped warning; local conditions remain unverified.';}
-  else $('location-status').textContent='Your precise location is only used when you choose it.';
+  else $('location-status').textContent='Location is used only when you choose it.';
 }
 function renderDestinations(){const prior=$('destination').value,items=candidates().sort((a,b)=>state.origin?distanceKm(state.origin,a.coordinates)-distanceKm(state.origin,b.coordinates):a.name.localeCompare(b.name));$('destination').innerHTML='<option value="">Suggest a nearby resource</option>'+items.map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');if(items.some(f=>f.id===prior))$('destination').value=prior;}
 function renderStatus(){
   if(!state.snapshot)return;const s=state.snapshot,count=selectedWarnings().length;
   $('mode-banner').classList.toggle('live',state.mode==='live');
   const realStreets=s.roadInfo?.basis==='osm';
-  $('mode-banner').innerHTML=state.mode==='demo'?`${icon('flask')} <span><strong>${realStreets?'Real streets. Simulated disaster.':'Illustrative road demo.'}</strong> ${realStreets?'OpenStreetMap roads and resource locations, with fictional warning areas and road conditions.':'Warnings, roads, and destinations are fictional. '+(s.demoRouting?.fallbackReason?'Real street data is unavailable; refresh to retry.':'')}</span>`:`${icon('shield')} <span><strong>${state.offline?'Saved offline conditions.':`Live conditions · ${s.region.name}.`}</strong> ${count?`${count} matching ${META[state.hazard].short} warning${count===1?'':'s'}. Follow official evacuation directions.`:'No matching warning was returned. This does not establish safe conditions.'}</span>`;
+  $('mode-banner').innerHTML=state.mode==='demo'?`${icon('flask')} <span><strong>Demo</strong> · ${realStreets?'Real streets, fictional conditions.':'Fictional grid · real street data unavailable.'}</span>`:`${icon('shield')} <span><strong>${state.offline?'Saved offline alerts':'Live alerts'}</strong> · ${count?count+' matching warning'+(count===1?'':'s'):'No matching warning returned.'} Follow official directions.</span>`;
   $('map-watermark').textContent=realStreets?'SIMULATED DISASTER':'FICTIONAL DEMO';
-  $('map-region').textContent=s.region.name;$('map-status').textContent=`${state.offline?'Offline street map · '+(s.roadInfo?.simulation?'fictional roads':'© OpenStreetMap contributors'):realStreets?`${s.roadInfo.segments.toLocaleString()} OSM road segments`:'Illustrative roads'} · ${formatTime(realStreets?s.roadInfo.fetchedAt:s.fetchedAt)}${state.mode==='live'?' · road conditions unverified':''}`;
+  $('map-region').textContent=s.region.name;$('map-status').textContent=`${state.offline?'Saved routing data · '+(realStreets?'real streets':'fictional roads'):realStreets?`${s.roadInfo.segments.toLocaleString()} OSM road segments`:'Illustrative roads'} · ${formatTime(realStreets?s.roadInfo.fetchedAt:s.fetchedAt)}${state.mode==='live'?' · road conditions unverified':''}`;
+  if(state.offline&&s.offlineSavedAt)$('offline-save-status').textContent=`Offline · ${s.region.name} · ${s.mode} conditions saved ${formatTime(s.offlineSavedAt)}. Warnings will not update without internet.`;
   updateControls();
 }
 function marker(p,cls,text){return L.marker(latlng(p),{icon:L.divIcon({className:cls,html:icon(cls==='origin-pin'?'locate':cls==='report-pin'?'alert':'pin'),iconSize:[30,30],iconAnchor:[15,15]}),title:text,keyboard:true});}
@@ -98,14 +107,14 @@ function comparisonHTML(route){
 }
 function renderResult(){
   const plan=state.plan,r=selectedRoute(),m=META[state.hazard];
-  if(!plan){$('route-result').innerHTML=`<div class="result-empty"><span class="icon-box">${icon('route')}</span><div><h2>${state.origin?'Ready to find a way beyond the warning.':'A route that starts where you are.'}</h2><p>${state.origin?'We’ll compare connected road routes to resources outside the warning areas.':'Your destination and route will appear here after you set your location.'}</p></div></div>`;return;}
+  if(!plan){$('route-result').innerHTML=`<div class="result-empty"><span class="icon-box">${icon('route')}</span><div><h2>${state.origin?'Ready to plan your route':'Your route will appear here'}</h2><p>${state.origin?'Tap Find a route to compare destinations.':'Set a location, then find a route.'}</p></div></div>`;return;}
   if(!r){const headings={no_warning:'No matching warning in this view',no_route:'An exit route could not be established',no_destination:'No destination found outside the warnings',incomplete_data:'More information is needed',stale_data:'Refresh before planning',destination_unavailable:'Choose another destination'};$('route-result').innerHTML=`<div class="no-route"><span class="icon-box">${icon('alert')}</span><div><span class="tag neutral">${esc(m.name)}</span><h2>${esc(headings[plan.status]||'Route unavailable')}</h2><p>${esc(plan.message)}</p><a href="${m.url}" target="_blank" rel="noopener noreferrer">Official ${m.short} guidance ↗</a></div></div>`;return;}
   const connector=(r.snapDistances.start+r.snapDistances.end)*1000;
   $('route-result').innerHTML=`<div class="result-heading"><div><span class="tag">${state.mode==='demo'?'DEMO · ':''}SUGGESTED RESOURCE</span><h2>${esc(r.destination.name)}</h2></div><div class="route-distance">${r.distanceKm.toFixed(1)} <small>km by road</small></div></div>
-    <div class="route-detail-line"><span>${icon('pin')} Outside mapped warnings checked</span><span>${icon('alert')} Open status unverified</span></div>
-    <p>${esc(plan.message)}</p><div class="route-story"><div><span>Your starting point</span><strong>${plan.originInside?`Inside the ${m.short} warning`:'Outside the selected warning'}</strong></div><div><span>Along this road route</span><strong>${r.exposureKm.toFixed(1)} km in caution segments</strong></div></div>
-    ${comparisonHTML(r)}
-    <p class="route-caveat">${esc(state.mode==='demo'&&state.hazard==='flood'?'Fictional demo: this route uses simulated dry roads and avoids the red flooded patches. Live flood warnings never receive that exception.':r.note)} ${connector>1?`${Math.round(connector)} m of access between the chosen points and road network is shown dashed and remains unverified.`:''}</p>
+    <div class="route-detail-line"><span>${icon('pin')} ${r.warningClearanceKm.toFixed(1)} km beyond warning boundaries</span><span>${icon('alert')} Open status unverified</span></div>
+    <p>${plan.originInside?'Planning route only. Confirm the destination is open.':'Outside this warning. This is a resource route.'}</p><div class="route-story"><div><span>Your starting point</span><strong>${plan.originInside?`Inside the ${m.short} warning`:'Outside the selected warning'}</strong></div><div><span>Along this road route</span><strong>${r.exposureKm.toFixed(1)} km in caution segments</strong></div></div>
+    <details class="route-disclosure"><summary>Why this route?</summary>${comparisonHTML(r)}</details>
+    <p class="route-caveat">${esc(state.mode==='demo'&&state.hazard==='flood'?'Demo route · fictional road conditions.':'Road passability is unverified. Follow official directions.')} ${connector>1?`${Math.round(connector)} m of unverified access shown dashed.`:''}</p>
     ${plan.otherHazardsChecked.length?`<p class="route-other">Also checked for known ${esc(plan.otherHazardsChecked.join(' and '))} warnings along the route. The map remains focused on ${esc(m.short)}.</p>`:''}
     ${plan.alternatives.length>1?`<div class="route-alternatives" aria-label="Suggested destinations">${plan.alternatives.map((a,i)=>`<button class="alternative ${i===state.routeIndex?'active':''}" data-route="${i}" aria-pressed="${i===state.routeIndex}"><strong>${esc(a.destination.name)}</strong><span>${a.distanceKm.toFixed(1)} km · ${i===0?'Least mapped exposure':'Alternative'}</span></button>`).join('')}</div>`:''}
     <div class="result-actions"><button class="text-button" id="route-details">How this route was chosen ${icon('arrow')}</button><button class="text-button" id="save-route">${icon('download')} Save route</button></div>`;
@@ -120,7 +129,7 @@ function acceptSnapshot(s){const next=fingerprint(s);if((state.plan||state.busy)
 async function loadSnapshot({reset=false,refresh=false}={}){
   const epoch=++state.epoch,ctx=context();if(state.busy)invalidate();state.stream?.close();state.stream=null;if(reset){state.snapshot=null;state.origin=null;state.originKind=null;invalidate();cancelPick();$('map-detail').hidden=true;renderMap();$('mode-banner').textContent='Loading your planner…';}
   $('refresh').disabled=true;
-  try{let s;try{if(!navigator.onLine)throw new Error('No internet connection.');s=refresh?await api('/api/refresh',ctx):await api(`/api/snapshot?region=${ctx.region}&mode=${ctx.mode}`);if(epoch!==state.epoch)return;state.offline=false;}catch(error){s=await loadPack(ctx.region,ctx.mode);if(!s)throw error;if(epoch!==state.epoch)return;state.offline=true;toast('Using saved conditions and the offline street map. Dashed boundary shows coverage.');}
+  try{let s;try{if(!navigator.onLine)throw new Error('No internet connection.');s=refresh?await api('/api/refresh',ctx):await api(`/api/snapshot?region=${ctx.region}&mode=${ctx.mode}`);if(epoch!==state.epoch)return;state.offline=false;}catch(error){s=await loadPack(ctx.region,ctx.mode);if(!s)throw error;if(epoch!==state.epoch)return;state.offline=true;toast('Using saved map data and conditions. Warnings will not update offline.');}
     acceptSnapshot(s);if(reset)resetView();if(ctx.mode==='live'&&!state.offline){state.stream=new EventSource(`/api/stream?region=${ctx.region}`);state.stream.addEventListener('snapshot',event=>{if(epoch===state.epoch){state.offline=false;acceptSnapshot(JSON.parse(event.data));}});}
   }catch(error){if(epoch===state.epoch){$('mode-banner').textContent='Conditions could not be loaded. Try refreshing or use a saved offline pack.';toast(error.message,true);}}
   finally{if(epoch===state.epoch){$('refresh').disabled=false;updateControls();}}
@@ -149,8 +158,10 @@ $('use-demo-location').onclick=()=>{const p=state.snapshot?.demoOrigins?.[state.
 $('use-location').onclick=()=>{if(!navigator.geolocation){toast('GPS is unavailable. Choose your location on the map.',true);return;}const epoch=state.epoch,revision=state.revision;$('use-location').disabled=true;navigator.geolocation.getCurrentPosition(pos=>{$('use-location').disabled=false;if(epoch!==state.epoch||revision!==state.revision)return;setOrigin([pos.coords.longitude,pos.coords.latitude],'gps');},()=>{$('use-location').disabled=false;toast('Location was not available. Choose a point on the map or enter coordinates.',true);},{enableHighAccuracy:true,timeout:15000,maximumAge:30000});};
 $('pick-location').onclick=()=>startPick('origin');map.on('click',choosePoint);document.addEventListener('keydown',e=>{if(e.key==='Escape'){cancelPick();updateControls();}});
 $('coordinate-form').onsubmit=e=>{e.preventDefault();setOrigin([Number($('origin-lon').value),Number($('origin-lat').value)],'manual');};
+$('warning-clearance').onchange=()=>{invalidate();$('destination').value='';renderDestinations();renderMap();};
 $('destination').onchange=()=>{invalidate();renderMap();};$('find-route').onclick=findRoute;$('reset-map').onclick=resetView;
 $('refresh').onclick=()=>loadSnapshot({refresh:true});
+$('quick-prepare').onclick=()=>{$('prep-checklist').open=true;};
 $('save-offline').onclick=async()=>{
   const epoch=state.epoch,ctx=context(),button=$('save-offline');button.disabled=true;
   $('offline-save-status').textContent='Downloading streets and conditions…';button.textContent='Downloading…';
@@ -158,9 +169,16 @@ $('save-offline').onclick=async()=>{
     const pack=await api(`/api/offline?region=${ctx.region}&mode=${ctx.mode}`);
     if(pack.roadInfo?.basis!=='osm')throw new Error('Real street data is unavailable. Refresh until OpenStreetMap streets load before saving.');
     if(!pack.roads?.nodes?.length||!pack.roads?.edges?.length)throw new Error('Street data is unavailable. Try saving again when roads have loaded.');
-    $('offline-save-status').textContent='Saving street map on this device…';
-    pack.offlineSavedAt=new Date().toISOString();await savePack(pack);
-    if(epoch===state.epoch){$('offline-save-status').textContent=`Saved: ${pack.region.name} · ${pack.mode} · ${pack.roads.edges.length.toLocaleString()} street segments · ${formatTime(pack.offlineSavedAt)}. Covers the selected region; buildings and background tiles are not included.`;toast('Offline street map and conditions saved.');}
+    await ensureOfflineShell();
+    const catalog=await (await fetch('/maps/catalog.json',{cache:'no-store'})).json(),entry=catalog.regions[ctx.region];
+    let mapAsset=await loadCityMap(ctx.region);
+    if(!mapAsset?.blob||mapAsset.sha256!==entry.sha256)mapAsset=await downloadCityMap(entry,{onProgress:(received,total)=>{if(epoch===state.epoch){$('offline-save-status').textContent=`Downloading city map: ${megabytes(received)} / ${megabytes(total)}`;button.textContent=`Downloading ${Math.round(received/total*100)}%`;}}});
+    $('offline-save-status').textContent='Saving map and routing data on this device…';
+    pack.offlineSavedAt=new Date().toISOString();pack.offlineMapVersion=mapAsset.version;await savePack(pack,mapAsset);
+    try{localStorage.setItem('terrawatch-offline-area',JSON.stringify({region:ctx.region,mode:ctx.mode,hazard:ctx.hazard}));}catch{}
+    // Persistence is best effort; storage failures above never report success.
+    navigator.storage?.persist?.().catch(()=>{});
+    if(epoch===state.epoch){cityBasemap.refresh();renderOfflineMap();$('offline-save-status').textContent=`Available offline: ${pack.region.name} · ${megabytes(mapAsset.bytes)} map + ${pack.mode} routing data · saved ${formatTime(pack.offlineSavedAt)}. Map includes streets, buildings and labels within this city area.`;toast('City map and routing data saved for offline use.');}
   }catch(error){if(epoch===state.epoch)$('offline-save-status').textContent='Save failed: '+error.message;toast(error.message,true);}
   finally{button.disabled=false;button.innerHTML=icon('download')+' Save offline';}
 };

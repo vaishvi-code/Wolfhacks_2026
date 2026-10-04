@@ -25,3 +25,18 @@ test('normal app rejects fictional grid packs instead of drawing them as street 
   delete snapshot.requireMappedRoads;
   assert.equal(planEvacuation(snapshot,request,{offline:true,requireMappedRoads:true}).status,'incomplete_data');
 });
+
+test('destination midway along a long road ends on that road, not a distant intersection',()=>{
+  const graph={nodes:[{id:'a',coordinates:[0,0]},{id:'b',coordinates:[.02,0]}],edges:[{id:'ab',from:'a',to:'b',name:'Main Street',oneway:true}]};
+  const route=planRoute(graph,[.005,0],[.015,.0001],[],[],{checkAccess:true});
+  assert.deepEqual(route.geometry.coordinates,[[.005,0],[.015,0]]);
+  assert.ok(route.snapDistances.end<.012);
+  assert.equal(route.access.endEdgeId,'ab');
+  assert.throws(()=>planRoute(graph,[.015,0],[.005,.0001],[]),/No connected route/);
+});
+
+test('distinct roads without edge IDs are never treated as the same road',()=>{
+  const graph={nodes:[{id:'a',coordinates:[0,0]},{id:'b',coordinates:[.002,0]},{id:'c',coordinates:[.002,.002]},{id:'d',coordinates:[0,.002]}],edges:[{from:'a',to:'d',name:'West'},{from:'d',to:'c',name:'North'},{from:'c',to:'b',name:'East'}]};
+  const route=planRoute(graph,[0,0],[.002,0],[]);
+  assert.deepEqual(route.geometry.coordinates,[[0,0],[0,.002],[.002,.002],[.002,0]]);
+});

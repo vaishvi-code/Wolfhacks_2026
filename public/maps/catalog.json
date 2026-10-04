@@ -1,0 +1,49 @@
+{
+  "version": "20261003",
+  "source": "https://build.protomaps.com/20261003.pmtiles",
+  "attribution": "© OpenStreetMap contributors · Protomaps",
+  "regions": {
+    "raleigh": {
+      "url": "/maps/raleigh.pmtiles",
+      "name": "Raleigh",
+      "version": "20261003",
+      "bbox": [
+        -78.7682,
+        35.6696,
+        -78.5082,
+        35.8896
+      ],
+      "maxDataZoom": 15,
+      "bytes": 17265757,
+      "sha256": "3ca470dad5fc15327ddaff8cdda2955014186f246130e068ef056e489de0769d"
+    },
+    "wilmington": {
+      "url": "/maps/wilmington.pmtiles",
+      "name": "Wilmington",
+      "version": "20261003",
+      "bbox": [
+        -78.0747,
+        34.1157,
+        -77.8147,
+        34.3357
+      ],
+      "maxDataZoom": 15,
+      "bytes": 7042270,
+      "sha256": "7a7beb143d339f3583ff3199dca0ae3130716863b50373792bf75598dbd9f02b"
+    },
+    "asheville": {
+      "url": "/maps/asheville.pmtiles",
+      "name": "Asheville",
+      "version": "20261003",
+      "bbox": [
+        -82.6815,
+        35.4851,
+        -82.4215,
+        35.7051
+      ],
+      "maxDataZoom": 15,
+      "bytes": 8015442,
+      "sha256": "b800aad7614ed07c8cfc51804cd961dc4d9fd02f21b83201bf1c31fef4d309ee"
+    }
+  }
+}

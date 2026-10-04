@@ -7,7 +7,7 @@ import {Store} from '../lib/store.mjs';
 
 function fixture(){
   const scenario=demoSnapshot(),[x,y]=scenario.region.center;
-  const points={a:[x+.012,y-.012],c:[x+.040,y-.012],d:[x+.012,y+.023],e:[x+.040,y+.023]};
+  const points={a:[x+.012,y-.012],c:[x+.052,y-.012],d:[x+.012,y+.023],e:[x+.052,y+.023]};
   const roads={nodes:Object.entries(points).map(([id,coordinates])=>({id,coordinates})),edges:[['a','c'],['a','d'],['d','e'],['e','c']].map(([from,to])=>({id:from+to,from,to,name:`Mapped ${from}-${to}`,oneway:false})),simulation:false,fetchedAt:new Date().toISOString()};
   const osm={data:{roads,facilities:[{id:'osm-test',kind:'clinic',name:'Mapped clinic',coordinates:points.c,simulation:false,source:'OpenStreetMap'}]},source:{id:'osm-v2-raleigh',name:'OpenStreetMap',status:'cached',lastSuccess:roads.fetchedAt}};
   return {scenario,osm,points};

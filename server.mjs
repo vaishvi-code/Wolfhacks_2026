@@ -1,5 +1,7 @@
 import http from 'node:http';
 import {readFile,stat} from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
+import {parseByteRange} from './lib/http-range.mjs';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
@@ -107,6 +109,14 @@ const server=http.createServer(async(req,res)=>{
     if(['/shared/routing.mjs','/shared/geo.mjs','/shared/evacuation.mjs'].includes(path))file=resolve(root,'lib',path.split('/').at(-1));
     else{file=resolve(publicRoot,'.'+decodeURIComponent(path==='/'?'/index.html':path));if(!file.startsWith(publicRoot+sep))throw error('Not found.',404);}
     const info=await stat(file).catch(()=>null);if(!info?.isFile())throw error('Not found.',404);
+    if(extname(file)==='.pmtiles'){
+      const range=parseByteRange(req.headers.range,info.size);
+      if(range===false){res.writeHead(416,{'Content-Range':`bytes */${info.size}`});return res.end();}
+      const start=range?.start??0,end=range?.end??info.size-1;
+      res.writeHead(range?206:200,{'Content-Type':'application/octet-stream','Accept-Ranges':'bytes','Content-Length':end-start+1,'Cache-Control':'no-cache',...(range?{'Content-Range':`bytes ${start}-${end}/${info.size}`}:{})});
+      if(req.method==='HEAD')return res.end();
+      const stream=createReadStream(file,{start,end});stream.on('error',()=>res.destroy());res.on('close',()=>stream.destroy());stream.pipe(res);return;
+    }
     res.writeHead(200,{'Content-Type':MIME[extname(file)]||'application/octet-stream','Cache-Control':path.startsWith('/vendor/')?'public, max-age=86400':'no-cache'});res.end(req.method==='HEAD'?undefined:await readFile(file));
   }catch(e){if(!res.headersSent)send(res,e.status||502,{error:e.status?e.message:'The request could not be completed. Check the source status and try again.'});else res.end();}
 });
