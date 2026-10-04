@@ -215,7 +215,7 @@ guidance=initGuidance({state,api,context,toast,download});
 preparedness=initPreparedness({state,toast});
 conditionsUI=initConditions({state,api,context,selectedRoute,acceptSnapshot,findRoute,toast});
 navigation=initNavigation({map,state,selectedRoute,selectFeature,fitRoute});
-hydrate();updateControls();api('/api/config').then(c=>state.config=c).catch(()=>{});loadSnapshot({reset:true});
+hydrate();updateControls();api('/api/config').then(c=>{state.config=c;state.configError=false;guidance.refresh();}).catch(()=>{state.configError=true;guidance.refresh();});loadSnapshot({reset:true});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
 // Keep feature navigation independent of data mode and saved routing state.

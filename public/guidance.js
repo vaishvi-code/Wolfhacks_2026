@@ -18,6 +18,14 @@ export function initGuidance({state,api,context,toast,download}) {
     $('transcribe-question').hidden=!recording;
     $('discard-recording').disabled=!recording&&!active()&&!requestingMic&&!transcribing;
     $('guidance-language').disabled=active()||requestingMic||transcribing;
+    const messages=[];
+    if(!state.config)messages.push(state.configError?'Connection to the app server failed. Reopen chat to retry.':'Checking voice and chat availability…');
+    else{
+      if(!state.config.integrations?.elevenlabs?.keyConfigured)messages.push('Mic unavailable: ElevenLabs is not configured on this server.');
+      if(!state.config.integrations?.gemini?.configured)messages.push('Send unavailable: Gemini is not configured on this server.');
+    }
+    if(!supported())messages.push('This browser cannot record audio here. Open the HTTPS site in Safari or Chrome, or type your question.');
+    $('guidance-availability').textContent=messages.join(' ');$('guidance-availability').hidden=!messages.length;
   }
   function stopAudio(){
     $('brief-audio').pause();$('brief-audio').removeAttribute('src');$('brief-audio').hidden=true;
@@ -67,7 +75,8 @@ export function initGuidance({state,api,context,toast,download}) {
     finally{if(version===answerVersion){generating=false;sync();}}
   }
   $('open-guidance').onclick=()=>{
-    if(!$('guidance-dialog').open)$('guidance-dialog').show();$('open-guidance').hidden=true;$('open-guidance').setAttribute('aria-expanded','true');loadVoices();
+    if(!$('guidance-dialog').open)$('guidance-dialog').show();$('open-guidance').hidden=true;$('open-guidance').setAttribute('aria-expanded','true');
+    if(!state.config){api('/api/config').then(config=>{state.config=config;state.configError=false;refresh();}).catch(()=>{state.configError=true;sync();});}else loadVoices();
     if(!supported())status('Recording is unavailable in this browser. You can type a question.');
   };
   $('generate-brief').onclick=()=>generate();
@@ -136,5 +145,6 @@ export function initGuidance({state,api,context,toast,download}) {
   };
   $('guidance-dialog').addEventListener('close',()=>{$('open-guidance').hidden=false;$('open-guidance').setAttribute('aria-expanded','false');$('open-guidance').focus();discard();stopAudio();answerVersion++;generating=false;sync();});
   window.addEventListener('pagehide',()=>{discard();stopAudio();});
-  sync();return {reset};
+  function refresh(){sync();if($('guidance-dialog').open&&state.config)void loadVoices();}
+  sync();return {reset,refresh};
 }

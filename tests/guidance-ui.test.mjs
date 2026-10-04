@@ -24,8 +24,21 @@ function setup(t,getUserMedia) {
   element('guidance-language').value='en';element('guidance-speed').value='1';
   const requests=[],state={revision:0,epoch:0,config:{integrations:{gemini:{configured:true},elevenlabs:{keyConfigured:true}}}};
   const controller=initGuidance({state,api:async(path,body)=>{requests.push({path,body});return {id:'brief',text:'DEMO response',language:'en'};},context:()=>({mode:'demo',hazard:'flood',region:'raleigh'}),toast:()=>{},download:()=>{}});
-  t.after(()=>{try{controller.reset();}finally{restore.forEach(fn=>fn());}});return {element,requests,state};
+  t.after(()=>{try{controller.reset();}finally{restore.forEach(fn=>fn());}});return {element,requests,state,controller};
 }
+
+test('chat controls refresh when server configuration arrives after initial rendering',t=>{
+  const {element,state,controller}=setup(t,async()=>({getTracks:()=>[]}));
+  const config=state.config;state.config=null;controller.refresh();
+  assert.equal(element('record-question').disabled,true);
+  element('guidance-question').value='What does this warning mean?';
+  state.config=config;controller.refresh();
+  assert.equal(element('record-question').disabled,false);assert.equal(element('ask-guidance').disabled,false);
+  assert.equal(element('guidance-availability').hidden,true);
+  state.config.integrations.elevenlabs.keyConfigured=false;controller.refresh();
+  assert.equal(element('record-question').disabled,true);
+  assert.match(element('guidance-availability').textContent,/ElevenLabs is not configured/);
+});
 
 test('closing guidance while microphone permission is pending stops late-granted audio tracks',async t=>{
   let grant,stopped=0;const {element}=setup(t,()=>new Promise(resolve=>grant=resolve));
