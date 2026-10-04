@@ -1,10 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {riverTrend} from '../lib/conditions.mjs';
+import {riverTrend,conditionEvidence} from '../lib/conditions.mjs';
+import {riverHistoryChart} from '../public/conditions.js';
 import {affectingEvents} from '../lib/route-events.mjs';
 import {StreamSinks} from '../lib/integrations.mjs';
 import {Store} from '../lib/store.mjs';
 const now=Date.now(),stamp=n=>new Date(now+n*60000).toISOString();
+test('chat evidence isolates cities and modes, marks expired events and omits private fields',()=>{
+  const event={region:'raleigh',mode:'live',kind:'blocked_road',description:'Observed blockage',status:'unverified',createdAt:stamp(-5),expires:stamp(-1),coordinates:[1,2],private:'SECRET'};
+  const snapshot={region:{id:'raleigh',gauge:'gage'},mode:'live',conditions:{source:'tiger',status:'connected',checkedAt:stamp(0),trend:{status:'available',latestFt:-1,observedAt:stamp(-40),points:[{time:stamp(-40),value:-1}]},hourly:[{bucket:stamp(-60),average_ft:'-1.5',min_ft:'-2',max_ft:'-1',observations:'4'}],events:[event,{...event,region:'asheville'},{...event,mode:'demo',simulation:true},{...event,simulation:true}]}};
+  const evidence=conditionEvidence(snapshot,now);
+  assert.equal(evidence.roadReports.length,1);assert.equal(evidence.roadReports[0].active,false);assert.equal(evidence.river.status,'stale');assert.equal(evidence.hourly[0].minimumFt,-2);
+  assert.ok(!JSON.stringify(evidence).includes('SECRET'));assert.ok(!JSON.stringify(evidence).includes('coordinates'));
+  snapshot.mode='demo';const demo=conditionEvidence(snapshot,now);assert.equal(demo.river,null);assert.equal(demo.hourly.length,0);assert.equal(demo.roadReports.length,1);assert.equal(demo.roadReports[0].simulation,true);
+});
+test('river charts handle missing, single, constant and negative readings without invented values',()=>{
+  assert.equal(riverHistoryChart({},'demo'),'');assert.match(riverHistoryChart({},'live'),/No river history/);
+  const single=riverHistoryChart({source:'local',trend:{points:[{time:stamp(-5),value:-2}]}},'live');
+  assert.match(single,/-2.00/);assert.ok(!single.includes('NaN'));assert.ok(!single.includes('Infinity'));
+  const hourly=riverHistoryChart({source:'tiger',hourly:[-120,-60].map(n=>({bucket:stamp(n),average_ft:3,min_ft:2,max_ft:4,observations:4}))},'live');
+  assert.match(hourly,/bars show minimum and maximum/);assert.match(hourly,/History from Tiger Data/);assert.match(hourly,/2.00 \/ 4.00/);
+});
 test('river trends require fresh observations and real history, and preserve negative gage datums',()=>{
   const readings=[{time:stamp(-65),value:-2},{time:stamp(-5),value:-1.2}];
   const trend=riverTrend(readings,now);assert.equal(trend.status,'available');assert.ok(Math.abs(trend.changeFt-.8)<1e-9);assert.equal(trend.windowMinutes,60);

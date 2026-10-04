@@ -5,6 +5,7 @@ import {roadFeatures} from './offline-map.js';
 import {createCityBasemap} from './city-map.js';
 import {downloadCityMap,megabytes} from './map-download.js';
 import {initConditions} from './conditions.js';
+import {initAreaContext} from './area-context.js';
 import {affectingEvents} from '/shared/route-events.mjs';
 import {requestRoute} from './route-request.js';
 import {initPreparedness} from './preparedness.js';
@@ -43,7 +44,7 @@ function renderOfflineMap(){
 }
 const warnings=L.layerGroup().addTo(map),resources=L.layerGroup().addTo(map),personal=L.layerGroup().addTo(map),routeLayer=L.layerGroup().addTo(map),observations=L.layerGroup().addTo(map);
 new ResizeObserver(()=>map.invalidateSize()).observe($('map'));
-let toastTimer,guidance,preparedness,conditionsUI,navigation;
+let toastTimer,guidance,preparedness,conditionsUI,areaContextUI,navigation;
 let reportLocation=null,reportEpoch=null,reportGpsVersion=0;
 const reportPreview=L.layerGroup().addTo(map);
 function setReportLocation(point,label){reportLocation=[...point];reportEpoch=state.epoch;$('report-location-status').textContent=label;$('report-error').textContent='';reportPreview.clearLayers();marker(point,'report-pin','Selected hazard location').addTo(reportPreview);}
@@ -60,6 +61,7 @@ function invalidate(message=''){if(!message)state.routeChange=null;state.revisio
 function updateControls(){
   preparedness?.render();
   conditionsUI?.render();
+  if(state.snapshot)areaContextUI?.render();
   const m=META[state.hazard];document.documentElement.style.setProperty('--accent',m.color);
   document.querySelectorAll('[data-hazard]').forEach(el=>{const yes=el.dataset.hazard===state.hazard;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',yes);});
   for(const mode of ['live','demo']){$(`mode-${mode}`).classList.toggle('selected',state.mode===mode);$(`mode-${mode}`).setAttribute('aria-pressed',state.mode===mode);}
@@ -214,6 +216,7 @@ window.addEventListener('online',()=>{if(state.offline)toast('Connection restore
 guidance=initGuidance({state,api,context,toast,download});
 preparedness=initPreparedness({state,toast});
 conditionsUI=initConditions({state,api,context,selectedRoute,acceptSnapshot,findRoute,toast});
+areaContextUI=initAreaContext({state,api,createCityBasemap});
 navigation=initNavigation({map,state,selectedRoute,selectFeature,fitRoute});
 hydrate();updateControls();api('/api/config').then(c=>{state.config=c;state.configError=false;guidance.refresh();}).catch(()=>{state.configError=true;guidance.refresh();});loadSnapshot({reset:true});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});

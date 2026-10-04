@@ -2,6 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {guidanceOptions,listVoices,resolveVoice,transcribeRecording,MAX_RECORDING_BYTES} from '../lib/voice.mjs';
 import {generateBrief,speech} from '../lib/integrations.mjs';
+
+test('Gemini receives Tiger measurements and report history for the selected hazard',async t=>{
+  env(t,{GEMINI_API_KEY:'test'});const snapshot=demoSnapshot();snapshot.mode='live';snapshot.selectedHazard='flood';
+  const time=new Date().toISOString();snapshot.conditions={source:'tiger',status:'connected',checkedAt:time,trend:{status:'insufficient_history',latestFt:3,observedAt:time,points:[{time,value:3}]},hourly:[{bucket:time,average_ft:3,min_ft:2,max_ft:4,observations:4}],events:[{region:snapshot.region.id,mode:'live',kind:'blocked_road',description:'Observed blockage',status:'unverified',createdAt:time,expires:new Date(Date.now()+60000).toISOString()}]};
+  t.mock.method(globalThis,'fetch',async(url,options)=>{
+    const body=JSON.parse(options.body),{evidence}=JSON.parse(body.contents[0].parts[0].text);
+    assert.equal(evidence.conditions.source,'tiger');assert.equal(evidence.conditions.river.latestFt,3);assert.equal(evidence.conditions.hourly[0].maximumFt,4);assert.equal(evidence.conditions.roadReports[0].active,true);
+    assert.match(body.systemInstruction.parts[0].text,/Hourly values are historical summaries, not forecasts/);
+    return json({candidates:[{content:{parts:[{text:'The latest recorded gage height is 3 ft.'}]}}]});
+  });
+  assert.equal((await generateBrief(snapshot,{language:'en',question:'Has the river risen?'})).ai,true);
+});
 test('automatic transcription omits a language hint and returns the detected language',async t=>{
   env(t,{ELEVENLABS_API_KEY:'test'});
   t.mock.method(globalThis,'fetch',async(url,options)=>{

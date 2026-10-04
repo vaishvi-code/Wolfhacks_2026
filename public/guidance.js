@@ -68,7 +68,7 @@ export function initGuidance({state,api,context,toast,download}) {
       if(version!==answerVersion||revision!==state.revision||epoch!==state.epoch)return;
       state.brief=brief;const badge=document.createElement('span'),text=document.createElement('p'),notice=document.createElement('p');
       badge.className='tag';badge.textContent=brief.provider;text.className='brief-text';text.textContent=brief.text;
-      notice.className='brief-notice';notice.textContent=brief.notice;$('guidance-content').replaceChildren(badge,text,notice);
+      notice.className='brief-notice';notice.textContent=brief.notice;$('guidance-content').replaceChildren(badge,text,...(brief.notice?[notice]:[]));
       $('guidance-content').lang=brief.language||'en';$('play-brief').disabled=false;$('download-brief').hidden=false;
     }catch(error){if(version===answerVersion){$('guidance-content').textContent='Guidance could not be generated. Try again.';toast(error.message,true);}}
     finally{if(version===answerVersion){generating=false;sync();}}

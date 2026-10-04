@@ -103,7 +103,15 @@ Controlled county population estimates can carry the special margin-of-error cod
 
 ## Other track datasets and prize tools
 
-NC OneMap, TIGER/Line, EPA, and Data.gov are not additional enabled connectors in this application; they need a specific feature and adapter before they can be used. Data.gov is a dataset catalog, not a universal disaster API. Solana wallet transactions and GoDaddy domain registration are separate product/deployment work, not missing keys for the evacuation planner. The Databricks hook above also needs its deployed ingestion service; do not enter a workspace URL and treat it as connected.
+**Area context:** Open Updates → Load area data to query the selected city's bounding box. The reference map has independent toggles for NC OneMap / NCEM effective special flood hazard polygons, Census TIGERweb tract boundaries, and EPA ECHO facility locations. TIGERweb is Census geographic data; the app does not download TIGER/Line shapefiles. These reference layers do not change routing exclusions or establish current inundation, population exposure, contamination, or road passability. Query results are capped at 200 flood polygons, 100 tracts, and 100 EPA facilities; capped results are labeled partial. Responses are cached for 24 hours, and unavailable sources retain their dated cached data when available. Queries run only when requested, so they do not delay initial planner loading.
+
+After loading Area context, chat receives bounded summaries for that city: flood-zone categories, tract names and GEOIDs, facility names, source status, retrieval times and catalog results. Geometry and credentials are not sent to Gemini. Reference data is real-city background even in demo mode. The chat identifies when area context has not been loaded.
+
+**Data.gov:** Dataset discovery uses the current [Catalog API](https://resources.data.gov/catalog-api/), not the retired CKAN interface. Set `DATA_GOV_API_KEY` in the server environment to enable spatially filtered flood-dataset search. Without a key, the UI offers a catalog link and explicitly shows discovery as unconfigured. Catalog results contain metadata and source links, not actual measurements. No API key is exposed to the browser.
+
+Run `node --env-file-if-exists=.env scripts/check-area-context.mjs raleigh` (or `wilmington` / `asheville`) to check source statuses and feature counts without printing credentials. An optional second argument caches verified results in a local SQLite file for previewing.
+
+Solana wallet transactions and GoDaddy domain registration are separate product/deployment work, not missing keys for the evacuation planner. The Databricks hook above also needs its deployed ingestion service; do not enter a workspace URL and treat it as connected.
 
 ## Prize submission scope
 

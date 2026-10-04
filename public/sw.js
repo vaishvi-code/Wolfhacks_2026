@@ -1,5 +1,5 @@
-const CACHE='wayahead-shell-v35';
-const SHELL=['/','/index.html','/styles.css','/app.js','/guidance.js','/navigation.js','/conditions.js','/offline.js','/offline-map.js','/city-map.js','/map-download.js','/maps/catalog.json','/route-request.js','/preparedness.js','/vendor/leaflet.js','/vendor/leaflet.css','/vendor/pmtiles.js','/vendor/protomaps-leaflet.js','/icons/wayahead.svg','/icons/wayahead-192.png','/icons/wayahead-512.png','/icons/wayahead-apple-touch.png','/manifest.webmanifest','/shared/routing.mjs','/shared/geo.mjs','/shared/evacuation.mjs','/shared/route-events.mjs'];
+const CACHE='wayahead-shell-v38';
+const SHELL=['/','/index.html','/styles.css','/app.js','/guidance.js','/navigation.js','/conditions.js','/area-context.js','/offline.js','/offline-map.js','/city-map.js','/map-download.js','/maps/catalog.json','/route-request.js','/preparedness.js','/vendor/leaflet.js','/vendor/leaflet.css','/vendor/pmtiles.js','/vendor/protomaps-leaflet.js','/icons/wayahead.svg','/icons/wayahead-192.png','/icons/wayahead-512.png','/icons/wayahead-apple-touch.png','/manifest.webmanifest','/shared/routing.mjs','/shared/geo.mjs','/shared/evacuation.mjs','/shared/route-events.mjs'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
 self.addEventListener('message',event=>{

@@ -6,6 +6,7 @@ import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
 import {Store} from './lib/store.mjs';
+import {AreaContext} from './lib/area-context.mjs';
 import {DisasterService} from './lib/service.mjs';
 import {REGIONS,POLL_MS} from './lib/config.mjs';
 import {validCoordinate,pointInGeometry,bboxGeometry} from './lib/geo.mjs';
@@ -18,6 +19,7 @@ import {guidanceOptions,listVoices,transcribeRecording,MAX_RECORDING_BYTES,AUDIO
 const root=fileURLToPath(new URL('.',import.meta.url)),publicRoot=resolve(root,'public');
 const store=new Store(process.env.DATABASE_PATH||resolve(root,'data/terrawatch.sqlite'));
 const sinks=new StreamSinks(store),service=new DisasterService(store,sinks),briefs=new Map(),limits=new Map();
+const areaContext=new AreaContext(store);
 const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon'};
 function send(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));}
 function error(message,status=400){return Object.assign(new Error(message),{status});}
@@ -41,6 +43,9 @@ const server=http.createServer(async(req,res)=>{
     const url=new URL(req.url,'http://localhost'),path=url.pathname;
     if(req.method==='GET'&&path==='/api/health')return send(res,200,{ok:true,name:'WayAhead',time:new Date().toISOString()});
     if(req.method==='GET'&&path==='/api/config')return send(res,200,{regions:Object.values(REGIONS),pollMs:POLL_MS,integrations:integrationStatus(sinks.tiger,sinks.databricks)});
+    if(req.method==='GET'&&path==='/api/area-context'){
+      const {region}=context(url);rateLimit(req,path);return send(res,200,await areaContext.load(REGIONS[region]));
+    }
     if(req.method==='GET'&&['/api/snapshot','/api/offline'].includes(path)){
       const {region,mode}=context(url);return send(res,200,await service.snapshot(region,mode,path==='/api/offline'));
     }
@@ -115,6 +120,7 @@ const server=http.createServer(async(req,res)=>{
       if(path==='/api/brief'){
         const options=guidanceOptions(body);
         const snapshot=await service.snapshot(region,mode);
+        snapshot.areaContext=areaContext.peek(REGIONS[region]);
         if(body.hazard){if(!HAZARDS.includes(body.hazard))throw error('Choose a valid disaster.');snapshot.incidents=evacuationIncidents(snapshot,body.hazard).filter(i=>i.category===body.hazard);snapshot.selectedHazard=body.hazard;}
         const result=await generateBrief(snapshot,options);const id=randomUUID();
         briefs.set(id,{...result,createdAt:Date.now()});return send(res,200,{...result,id});
