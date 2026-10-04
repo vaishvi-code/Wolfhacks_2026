@@ -61,7 +61,7 @@ function invalidate(message=''){if(!message)state.routeChange=null;state.revisio
 function updateControls(){
   preparedness?.render();
   conditionsUI?.render();
-  if(state.snapshot)areaContextUI?.render();
+  areaContextUI?.render();
   const m=META[state.hazard];document.documentElement.style.setProperty('--accent',m.color);
   document.querySelectorAll('[data-hazard]').forEach(el=>{const yes=el.dataset.hazard===state.hazard;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',yes);});
   for(const mode of ['live','demo']){$(`mode-${mode}`).classList.toggle('selected',state.mode===mode);$(`mode-${mode}`).setAttribute('aria-pressed',state.mode===mode);}
@@ -215,7 +215,7 @@ window.addEventListener('offline',()=>{state.stream?.close();loadSnapshot();});
 window.addEventListener('online',()=>{if(state.offline)toast('Connection restored. Refresh conditions before planning.');});
 guidance=initGuidance({state,api,context,toast,download});
 preparedness=initPreparedness({state,toast});
-conditionsUI=initConditions({state,api,context,selectedRoute,acceptSnapshot,findRoute,toast});
+conditionsUI=initConditions({state,api,context,selectedRoute,acceptSnapshot,findRoute,toast,refreshConditions:()=>loadSnapshot({refresh:true})});
 areaContextUI=initAreaContext({state,api,createCityBasemap});
 navigation=initNavigation({map,state,selectedRoute,selectFeature,fitRoute});
 hydrate();updateControls();api('/api/config').then(c=>{state.config=c;state.configError=false;guidance.refresh();}).catch(()=>{state.configError=true;guidance.refresh();});loadSnapshot({reset:true});
@@ -229,6 +229,7 @@ function selectFeature(name){
   for(const feature of ['route','prepare','updates'])$('view-'+feature).hidden=feature!==name;
   document.querySelector('.emergency-dock').hidden=name!=='route';
   if(name==='route')requestAnimationFrame(()=>map.invalidateSize());
+  if(name==='updates')void areaContextUI?.show();
 }
 const featureTabs=[...document.querySelectorAll('[data-view]')];
 featureTabs.forEach((button,index)=>{

@@ -6,6 +6,7 @@ export function createCityBasemap(map,{onStatus=()=>{},onFallback=()=>{}}={}){
   const remove=()=>{if(layer){map.removeLayer(layer);layer=null;}};
   const attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · <a href="https://protomaps.com">Protomaps</a>';
   return {
+    remove(){revision++;key='';remove();},
     refresh(){key='';forceRevision++;},
     async update(region,offline){
       const next=`${region}:${offline}:${forceRevision}`;

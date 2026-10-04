@@ -3,9 +3,31 @@ import assert from 'node:assert/strict';
 import {AreaContext,normalizeAreaFeatures,areaContextEvidence,safePublicUrl,floodWaterways} from '../lib/area-context.mjs';
 import {Store} from '../lib/store.mjs';
 import {REGIONS} from '../lib/config.mjs';
-import {areaContextCards} from '../public/area-context.js';
+import {areaContextCards,initAreaContext} from '../public/area-context.js';
 
 const collection=properties=>({type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Point',coordinates:[-78.6,35.7]},properties}]});
+function areaUI(t,{online=true,api}={}){
+  const button={},panel={innerHTML:'',querySelector:()=>button};
+  const descriptor=Object.getOwnPropertyDescriptor(globalThis,'document');Object.defineProperty(globalThis,'document',{configurable:true,value:{getElementById:()=>panel}});
+  t.after(()=>{if(descriptor)Object.defineProperty(globalThis,'document',descriptor);else delete globalThis.document;});
+  const state={region:'raleigh',snapshot:null,offline:true};
+  return {panel,button,state,ui:initAreaContext({state,api,isOnline:()=>online})};
+}
+const emptyContext=()=>({region:'raleigh',checkedAt:new Date().toISOString(),...Object.fromEntries(['flood','tracts','epa','catalog'].map(k=>[k,{data:null,source:{name:k,status:'unavailable',detail:'Unavailable'}}]))});
+test('opening Updates loads area data even when the planner uses an offline fallback or is still loading',async t=>{
+  let calls=0;const {ui,panel}=areaUI(t,{api:async()=>{calls++;return emptyContext();}});
+  await ui.show();assert.equal(calls,1);assert.match(panel.innerHTML,/Environmental facilities/);assert.ok(!panel.innerHTML.includes('Connect to load or refresh'));
+  await ui.show();assert.equal(calls,1);
+});
+test('failed Updates loads release the button and a retry works',async t=>{
+  let calls=0;const {ui,panel,button}=areaUI(t,{api:async()=>{if(++calls===1)throw Error('Try again');return emptyContext();}});
+  await ui.show();assert.match(panel.innerHTML,/role="alert"/);assert.ok(!panel.innerHTML.includes('Loading area data…'));
+  await button.onclick();assert.equal(calls,2);assert.ok(!panel.innerHTML.includes('role="alert"'));
+});
+test('opening Updates with no network shows a connection message without requests',async t=>{
+  const {ui,panel}=areaUI(t,{online:false,api:()=>{throw Error('Must not request');}});
+  await ui.show();assert.match(panel.innerHTML,/Connect to load or refresh/);
+});
 test('flood location evidence names only streams intersecting returned flood polygons',()=>{
   const polygon={type:'Polygon',coordinates:[[[0,0],[2,0],[2,2],[0,2],[0,0]]]};
   const stream=(name,coordinates)=>({geometry:{type:'LineString',coordinates},properties:{name}});
