@@ -10,6 +10,8 @@ test('API questions receive integration capabilities and actual reference datase
     const body=JSON.parse(options.body),{evidence}=JSON.parse(body.contents[0].parts[0].text);
     assert.ok(evidence.apiCapabilities.some(api=>api.name==='Data.gov'&&api.configured));assert.equal(evidence.areaContext.datasets[0].title,'Flood dataset');assert.equal(evidence.areaContext.facilities[0].name,'Example facility');
     assert.ok(!options.body.includes('PRIVATE-API-KEY'));assert.match(body.systemInstruction.parts[0].text,/Use apiCapabilities/);assert.ok(!body.systemInstruction.parts[0].text.includes('Answer the question about the selected warning'));
+    assert.match(body.systemInstruction.parts[0].text,/For questions about flood-prone areas or long-term flood risk, prioritize real areaContext/);
+    assert.match(body.systemInstruction.parts[0].text,/omit demo warnings unless/);
     return json({candidates:[{content:{parts:[{text:'Data.gov discovers relevant datasets; EPA ECHO lists environmental facilities.'}]}}]});
   });
   const result=await generateBrief(snapshot,{language:'en',question:'What do the new APIs do?'});assert.equal(result.ai,true);
