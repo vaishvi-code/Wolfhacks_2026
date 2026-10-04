@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {initGuidance} from '../public/guidance.js';
+
+const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+const renderedIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
 
 function setup(t,getUserMedia) {
   const nodes=new Map();
@@ -8,7 +12,7 @@ function setup(t,getUserMedia) {
     value='';textContent='';hidden=false;disabled=false;src='';
     pause(){} focus(){} removeAttribute(name){delete this[name];}setAttribute(name,value){this[name]=value;}
   }
-  const element=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
+  const element=id=>{if(!renderedIds.has(id))return null;if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
   class Recorder {
     static isTypeSupported(){return true;}
     state='inactive';constructor(){Recorder.latest=this;}

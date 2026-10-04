@@ -97,9 +97,10 @@
     <label for="guidance-question">Your question</label><textarea id="guidance-question" rows="3" maxlength="600" placeholder="What does this warning mean? What information is missing?"></textarea>
     <button class="button primary wide" id="ask-guidance" disabled>Send question</button>
     <details class="chat-recording"><summary>Record a question</summary>
-    <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Record a question</button><button class="text-button" id="discard-recording" disabled>Discard recording</button></div>
+    <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Record a question</button><button class="button secondary" id="transcribe-question" disabled hidden>Use recording</button><button class="text-button" id="discard-recording" disabled>Discard recording</button></div>
 
     <audio id="recording-preview" controls hidden aria-label="Your recorded question"></audio>
+    <p id="recording-status" class="guidance-hint" role="status"></p>
 
     <p class="guidance-hint">After you stop, your recording is sent to ElevenLabs for automatic language detection and transcription. Send question sends the reviewed text and warnings to Gemini. Provider retention policies apply. Avoid personal details; your question is not sent to emergency services.</p>
 
