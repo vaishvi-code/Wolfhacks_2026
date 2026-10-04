@@ -65,7 +65,7 @@ test('automatic mic mode transcribes and asks Gemini on stop',async t=>{
   assert.equal(requests[0].body.question,'¿Qué significa esta alerta?');
   assert.equal(element('guidance-content').children[1].textContent,'DEMO response');
   assert.equal(element('guidance-question').value,'¿Qué significa esta alerta?');
-  assert.match(element('recording-status').textContent,/Language detected: es/);
+  assert.equal(element('recording-status').hidden,true);
   assert.equal(element('ask-guidance').disabled,false);
 });
 

@@ -5,16 +5,19 @@ export function initGuidance({state,api,context,toast,download}) {
   let recorder,stream,chunks=[],recording,clock,deadline,startedAt,captureVersion=0,requestingMic=false;
   let transcribing=false,transcriptionController,questionVersion=0;
   const supported=()=>!!navigator.mediaDevices?.getUserMedia&&typeof MediaRecorder!=='undefined';
-  const status=text=>$('recording-status').textContent=text;
+  const status=text=>{$('recording-status').textContent=text;$('recording-status').hidden=!text;};
   const active=()=>recorder?.state==='recording';
   function sync(){
     const busy=generating||active()||requestingMic||transcribing;
     $('generate-brief').disabled=busy;
     $('ask-guidance').disabled=busy||!$('guidance-question').value.trim()||!state.config?.integrations.gemini.configured;
     $('record-question').disabled=!supported()||!state.config?.integrations.elevenlabs.keyConfigured||!state.config?.integrations.gemini.configured||generating||requestingMic||transcribing;
-    $('record-question').textContent=active()?'Stop & send':'🎙 Speak';
+    $('record-question').innerHTML=active()?'<svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>':'<svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>';
+    $('record-question').setAttribute('aria-label',active()?'Stop and send question':'Speak your question');
+    $('record-question').setAttribute('title',active()?'Stop and send question':'Speak your question');
     $('record-question').setAttribute('aria-pressed',String(!!active()));
     $('discard-recording').disabled=!recording&&!active()&&!requestingMic&&!transcribing;
+    $('discard-recording').hidden=$('discard-recording').disabled;
     $('guidance-language').disabled=active()||requestingMic||transcribing;
     const messages=[];
     if(!state.config)messages.push(state.configError?'Connection to the app server failed. Reopen chat to retry.':'Checking voice and chat availability…');
@@ -39,7 +42,7 @@ export function initGuidance({state,api,context,toast,download}) {
     captureVersion++;requestingMic=false;clearInterval(clock);clearTimeout(deadline);
     if(active())recorder.stop();stream?.getTracks().forEach(track=>track.stop());stream=null;recorder=null;chunks=[];
     transcriptionController?.abort();transcribing=false;recording=null;
-    status('Speak for up to 30 seconds. Stop & send asks the chatbot automatically.');sync();
+    status('');sync();
   }
   function reset(){clearAnswer();discard();$('guidance-question').value='';questionVersion++;sync();}
   async function loadVoices(){
@@ -134,7 +137,7 @@ export function initGuidance({state,api,context,toast,download}) {
       if(edited!==questionVersion){recording=null;status('Your typed question changed while transcribing. It was kept. Choose Send question when ready.');return;}
       $('guidance-question').value=result.text;questionVersion++;
       recording=null;transcribing=false;
-      status(`${result.language&&result.language!=='auto'?'Language detected: '+result.language+'. ':''}Question sent.${result.truncated?' The transcript was shortened to 600 characters.':''}`);
+      status('');
       await generate(result.text);
     }catch(error){if(version===captureVersion)status(error.name==='AbortError'?'Transcription cancelled.':error.message);}
     finally{if(version===captureVersion){transcribing=false;sync();}}

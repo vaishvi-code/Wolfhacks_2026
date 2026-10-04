@@ -92,27 +92,21 @@
 <dialog id="route-summary-dialog" aria-labelledby="route-summary-title"><div class="dialog-heading"><h2 id="route-summary-title">Your route</h2><button class="icon-button close-dialog" aria-label="Close route summary">×</button></div><div id="route-summary-content"></div></dialog>
 <dialog id="guidance-dialog" class="chat-panel" aria-labelledby="guidance-title">
   <div class="dialog-heading"><div><span class="eyebrow">ASK WAYAHEAD</span><h2 id="guidance-title">Flood guidance</h2></div><button class="icon-button close-dialog" aria-label="Close guidance">×</button></div>
-  <section class="guidance-question-panel"><h3>Ask about this warning</h3><p id="guidance-availability" class="guidance-hint" role="status" hidden></p>
-    <p class="guidance-hint">Type a question or tap Speak. Stop & send displays what you said and asks the chatbot automatically. Answers use the selected warning information.</p>
+  <section class="guidance-question-panel"><p id="guidance-availability" class="guidance-hint" role="status" hidden></p>
     <label for="guidance-question">Your question</label><textarea id="guidance-question" rows="3" maxlength="600" placeholder="What does this warning mean? What information is missing?"></textarea>
-    <button class="button primary wide" id="ask-guidance" disabled>Send question</button>
-    <div class="chat-recording">
-    <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Speak</button><button class="text-button" id="discard-recording" disabled>Cancel</button></div>
+    <div class="chat-composer-actions"><button class="button primary" id="ask-guidance" disabled>Send question</button><button class="button secondary chat-mic" id="record-question" aria-label="Speak your question" title="Speak your question" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg></button><button class="text-button" id="discard-recording" disabled hidden>Cancel</button></div>
 
-    <p id="recording-status" class="guidance-hint" role="status"></p>
+    <p id="recording-status" class="guidance-hint" role="status" hidden></p>
 
-    <p class="guidance-hint">Stopping sends your audio to ElevenLabs for transcription, then the text and warning information to Gemini for an answer. Avoid personal details; your question is not sent to emergency services.</p>
 
-    </div>
   </section>
-  <p class="muted">Understand the displayed warnings in your language. Follow local emergency instructions.</p>
   <details class="chat-settings"><summary>Voice settings</summary><div class="guidance-settings">
     <label>Guidance language<select id="guidance-language"><option value="auto" selected>Automatic</option><option value="en">English</option><option value="es">Español</option></select></label>
     <label>Narrator<select id="guidance-voice" disabled><option value="">Default voice</option></select></label>
     <label>Playback speed<select id="guidance-speed"><option value="1">Normal</option><option value="0.85">Slower · 0.85×</option></select></label>
   </div>
-  </details>
   <p id="voice-status" class="guidance-hint" role="status">Your language is detected automatically.</p>
+  </details>
   <div class="guidance-actions"><button class="button primary" id="generate-brief"><span data-icon="sparkles"></span> Explain my situation</button><button class="button secondary" id="play-brief" disabled><span data-icon="volume"></span> Listen</button><button class="text-button" id="download-brief" hidden>Save text</button></div>
   <div id="guidance-content" class="brief-content" aria-live="polite">Generate a short explanation of the available information.</div>
   <audio id="brief-audio" controls hidden aria-label="Spoken guidance"></audio>
