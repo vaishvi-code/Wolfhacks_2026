@@ -2,7 +2,7 @@ export function initGuidance({state,api,context,toast,download}) {
   const $=id=>document.getElementById(id);
   $('guidance-dialog').addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();$('guidance-dialog').close();}});
   let answerVersion=0,generating=false,voicesLoaded=false,loadingVoices=false,audioUrl;
-  let recorder,stream,chunks=[],recording,recordingUrl,clock,deadline,startedAt,captureVersion=0,requestingMic=false;
+  let recorder,stream,chunks=[],recording,clock,deadline,startedAt,captureVersion=0,requestingMic=false;
   let transcribing=false,transcriptionController,questionVersion=0;
   const supported=()=>!!navigator.mediaDevices?.getUserMedia&&typeof MediaRecorder!=='undefined';
   const status=text=>$('recording-status').textContent=text;
@@ -11,11 +11,9 @@ export function initGuidance({state,api,context,toast,download}) {
     const busy=generating||active()||requestingMic||transcribing;
     $('generate-brief').disabled=busy;
     $('ask-guidance').disabled=busy||!$('guidance-question').value.trim()||!state.config?.integrations.gemini.configured;
-    $('record-question').disabled=!supported()||!state.config?.integrations.elevenlabs.keyConfigured||generating||requestingMic||transcribing;
-    $('record-question').textContent=active()?'Stop recording':'🎙 Speak';
+    $('record-question').disabled=!supported()||!state.config?.integrations.elevenlabs.keyConfigured||!state.config?.integrations.gemini.configured||generating||requestingMic||transcribing;
+    $('record-question').textContent=active()?'Stop & send':'🎙 Speak';
     $('record-question').setAttribute('aria-pressed',String(!!active()));
-    $('transcribe-question').disabled=!recording||busy;
-    $('transcribe-question').hidden=!recording;
     $('discard-recording').disabled=!recording&&!active()&&!requestingMic&&!transcribing;
     $('guidance-language').disabled=active()||requestingMic||transcribing;
     const messages=[];
@@ -41,9 +39,7 @@ export function initGuidance({state,api,context,toast,download}) {
     captureVersion++;requestingMic=false;clearInterval(clock);clearTimeout(deadline);
     if(active())recorder.stop();stream?.getTracks().forEach(track=>track.stop());stream=null;recorder=null;chunks=[];
     transcriptionController?.abort();transcribing=false;recording=null;
-    if(recordingUrl)URL.revokeObjectURL(recordingUrl);recordingUrl=null;
-    $('recording-preview').pause();$('recording-preview').removeAttribute('src');$('recording-preview').hidden=true;
-    status('Record up to 30 seconds, or type your question.');sync();
+    status('Speak for up to 30 seconds. Stop & send asks the chatbot automatically.');sync();
   }
   function reset(){clearAnswer();discard();$('guidance-question').value='';questionVersion++;sync();}
   async function loadVoices(){
@@ -120,9 +116,7 @@ export function initGuidance({state,api,context,toast,download}) {
         if(version!==captureVersion)return;clearInterval(clock);clearTimeout(deadline);stream?.getTracks().forEach(track=>track.stop());stream=null;
         recording=new Blob(chunks,{type:mime});chunks=[];recorder=null;
         if(!recording.size){discard();status('No audio captured. Try again.');return;}
-        recordingUrl=URL.createObjectURL(recording);$('recording-preview').src=recordingUrl;$('recording-preview').hidden=false;
-        status('Recording ready on this device. Preview it, then choose Use recording.');sync();
-        if($('guidance-language').value==='auto')void $('transcribe-question').onclick();
+        void transcribeAndAsk();
       };
       recorder.start(250);startedAt=Date.now();status('Recording… 0 / 30 seconds.');sync();
       clock=setInterval(()=>status(`Recording… ${Math.floor((Date.now()-startedAt)/1000)} / 30 seconds.`),1000);
@@ -130,19 +124,21 @@ export function initGuidance({state,api,context,toast,download}) {
     }catch(error){if(version===captureVersion){discard();status(error.name==='NotAllowedError'?'Microphone access was not granted. You can type your question.':error.message);}}
   };
   $('discard-recording').onclick=discard;
-  $('transcribe-question').onclick=async()=>{
+  async function transcribeAndAsk(){
     if(!recording)return;const version=captureVersion,edited=questionVersion;transcribing=true;sync();status('Sending recording to ElevenLabs for transcription…');
     transcriptionController=new AbortController();
     try{
       const response=await fetch(`/api/transcribe?language=${$('guidance-language').value}`,{method:'POST',headers:{'Content-Type':recording.type},body:recording,signal:AbortSignal.any([transcriptionController.signal,AbortSignal.timeout(55000)])});
       const result=await response.json();if(!response.ok)throw new Error(result.error);
       if(version!==captureVersion)return;
-      if(edited!==questionVersion){status('Your typed question changed while transcribing. It was kept; transcribe again to replace it.');return;}
+      if(edited!==questionVersion){recording=null;status('Your typed question changed while transcribing. It was kept. Choose Send question when ready.');return;}
       $('guidance-question').value=result.text;questionVersion++;
-      status(`${result.language&&result.language!=='auto'?'Language detected: '+result.language+'. ':''}Review and edit the text, then choose Send question.${result.truncated?' The transcript was shortened to 600 characters.':''}`);
+      recording=null;transcribing=false;
+      status(`${result.language&&result.language!=='auto'?'Language detected: '+result.language+'. ':''}Question sent.${result.truncated?' The transcript was shortened to 600 characters.':''}`);
+      await generate(result.text);
     }catch(error){if(version===captureVersion)status(error.name==='AbortError'?'Transcription cancelled.':error.message);}
     finally{if(version===captureVersion){transcribing=false;sync();}}
-  };
+  }
   $('guidance-dialog').addEventListener('close',()=>{$('open-guidance').hidden=false;$('open-guidance').setAttribute('aria-expanded','false');$('open-guidance').focus();discard();stopAudio();answerVersion++;generating=false;sync();});
   window.addEventListener('pagehide',()=>{discard();stopAudio();});
   function refresh(){sync();if($('guidance-dialog').open&&state.config)void loadVoices();}

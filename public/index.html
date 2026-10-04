@@ -93,18 +93,17 @@
 <dialog id="guidance-dialog" class="chat-panel" aria-labelledby="guidance-title">
   <div class="dialog-heading"><div><span class="eyebrow">ASK WAYAHEAD</span><h2 id="guidance-title">Flood guidance</h2></div><button class="icon-button close-dialog" aria-label="Close guidance">×</button></div>
   <section class="guidance-question-panel"><h3>Ask about this warning</h3><p id="guidance-availability" class="guidance-hint" role="status" hidden></p>
-    <p class="guidance-hint">Type a question or record one. Answers use the selected warning information; they cannot confirm road safety or shelter opening.</p>
+    <p class="guidance-hint">Type a question or tap Speak. Stop & send displays what you said and asks the chatbot automatically. Answers use the selected warning information.</p>
     <label for="guidance-question">Your question</label><textarea id="guidance-question" rows="3" maxlength="600" placeholder="What does this warning mean? What information is missing?"></textarea>
     <button class="button primary wide" id="ask-guidance" disabled>Send question</button>
-    <details class="chat-recording"><summary>Record a question</summary>
-    <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Record a question</button><button class="button secondary" id="transcribe-question" disabled hidden>Use recording</button><button class="text-button" id="discard-recording" disabled>Discard recording</button></div>
+    <div class="chat-recording">
+    <div class="guidance-actions"><button class="button secondary" id="record-question" aria-pressed="false">Speak</button><button class="text-button" id="discard-recording" disabled>Cancel</button></div>
 
-    <audio id="recording-preview" controls hidden aria-label="Your recorded question"></audio>
     <p id="recording-status" class="guidance-hint" role="status"></p>
 
-    <p class="guidance-hint">After you stop, your recording is sent to ElevenLabs for automatic language detection and transcription. Send question sends the reviewed text and warnings to Gemini. Provider retention policies apply. Avoid personal details; your question is not sent to emergency services.</p>
+    <p class="guidance-hint">Stopping sends your audio to ElevenLabs for transcription, then the text and warning information to Gemini for an answer. Avoid personal details; your question is not sent to emergency services.</p>
 
-    </details>
+    </div>
   </section>
   <p class="muted">Understand the displayed warnings in your language. Follow local emergency instructions.</p>
   <details class="chat-settings"><summary>Voice settings</summary><div class="guidance-settings">

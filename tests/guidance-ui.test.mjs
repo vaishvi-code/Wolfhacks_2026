@@ -11,6 +11,7 @@ function setup(t,getUserMedia) {
   class Element extends EventTarget {
     value='';textContent='';hidden=false;disabled=false;src='';
     pause(){} focus(){} removeAttribute(name){delete this[name];}setAttribute(name,value){this[name]=value;}
+    replaceChildren(...children){this.children=children;}
   }
   const element=id=>{if(!renderedIds.has(id))return null;if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
   class Recorder {
@@ -19,7 +20,7 @@ function setup(t,getUserMedia) {
     start(){this.state='recording';}
     stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['question audio'],{type:'audio/webm'})});this.onstop?.();}
   }
-  const globals={document:{getElementById:element},window:new EventTarget(),navigator:{mediaDevices:{getUserMedia}},MediaRecorder:Recorder};
+  const globals={document:{getElementById:element,createElement:()=>new Element()},window:new EventTarget(),navigator:{mediaDevices:{getUserMedia}},MediaRecorder:Recorder};
   const restore=[];
   for(const [key,value]of Object.entries(globals)){
     const descriptor=Object.getOwnPropertyDescriptor(globalThis,key);Object.defineProperty(globalThis,key,{value,writable:true,configurable:true});
@@ -48,10 +49,10 @@ test('closing guidance while microphone permission is pending stops late-granted
   let grant,stopped=0;const {element}=setup(t,()=>new Promise(resolve=>grant=resolve));
   const pending=element('record-question').onclick();element('guidance-dialog').dispatchEvent(new Event('close'));
   grant({getTracks:()=>[{stop:()=>stopped++}]});await pending;
-  assert.equal(stopped,1);assert.equal(element('recording-preview').hidden,true);assert.equal(element('transcribe-question').disabled,true);
+  assert.equal(stopped,1);assert.equal(element('discard-recording').disabled,true);
 });
 
-test('automatic mic mode transcribes on stop but waits for review before asking Gemini',async t=>{
+test('automatic mic mode transcribes and asks Gemini on stop',async t=>{
   let uploads=0;const {element,requests}=setup(t,async()=>({getTracks:()=>[{stop(){}}]}));
   element('guidance-language').value='auto';
   t.mock.method(globalThis,'fetch',async(url)=>{
@@ -60,27 +61,32 @@ test('automatic mic mode transcribes on stop but waits for review before asking 
   });
   await element('record-question').onclick();await element('record-question').onclick();
   await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(uploads,1);assert.equal(requests.length,0);
+  assert.equal(uploads,1);assert.equal(requests.length,1);
+  assert.equal(requests[0].body.question,'¿Qué significa esta alerta?');
+  assert.equal(element('guidance-content').children[1].textContent,'DEMO response');
   assert.equal(element('guidance-question').value,'¿Qué significa esta alerta?');
   assert.match(element('recording-status').textContent,/Language detected: es/);
   assert.equal(element('ask-guidance').disabled,false);
 });
 
-test('recording requires separate transcription and question actions, and discarding releases its preview',async t=>{
+test('explicit language also sends speech directly to chat and releases the microphone',async t=>{
   let stopped=0,uploads=0;const {element,requests}=setup(t,async()=>({getTracks:()=>[{stop:()=>stopped++}]}));
   t.mock.method(globalThis,'fetch',async(url,options)=>{uploads++;assert.match(url,/api\/transcribe/);assert.ok(options.body instanceof Blob);return new Response(JSON.stringify({text:'What is missing?',provider:'ElevenLabs Scribe'}));});
   await element('record-question').onclick();await element('record-question').onclick();
-  assert.ok(stopped>0);assert.equal(uploads,0);assert.equal(requests.length,0);assert.equal(element('recording-preview').hidden,false);
-  await element('transcribe-question').onclick();assert.equal(uploads,1);assert.equal(requests.length,0);assert.equal(element('guidance-question').value,'What is missing?');
-  element('discard-recording').onclick();assert.equal(element('recording-preview').hidden,true);assert.equal(element('transcribe-question').disabled,true);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.ok(stopped>0);assert.equal(uploads,1);assert.equal(requests.length,1);
+  assert.equal(requests[0].body.question,'What is missing?');
+  assert.equal(element('guidance-question').value,'What is missing?');
+  assert.equal(element('discard-recording').disabled,true);
 });
 
 test('a transcription finishing after discard cannot replace the question text',async t=>{
-  let respond;const {element}=setup(t,async()=>({getTracks:()=>[{stop:()=>{}}]}));
+  let respond;const {element,requests}=setup(t,async()=>({getTracks:()=>[{stop:()=>{}}]}));
   t.mock.method(globalThis,'fetch',()=>new Promise(resolve=>respond=resolve));
   await element('record-question').onclick();await element('record-question').onclick();
-  const pending=element('transcribe-question').onclick();element('discard-recording').onclick();
+  element('discard-recording').onclick();
   element('guidance-question').value='Keep my typed question';
-  respond(new Response(JSON.stringify({text:'Late transcript',provider:'ElevenLabs Scribe'})));await pending;
+  respond(new Response(JSON.stringify({text:'Late transcript',provider:'ElevenLabs Scribe'})));await new Promise(resolve=>setImmediate(resolve));
   assert.equal(element('guidance-question').value,'Keep my typed question');
+  assert.equal(requests.length,0);
 });
