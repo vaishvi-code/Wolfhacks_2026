@@ -1,6 +1,7 @@
 import {initGuidance} from './guidance.js';
 import {savePack,loadPack} from './offline.js';
 import {roadFeatures} from './offline-map.js';
+import {requestRoute} from './route-request.js';
 import {destinationCandidates,evacuationIncidents,planEvacuation} from '/shared/evacuation.mjs';
 import {pointInGeometry,bboxGeometry,distanceKm} from '/shared/geo.mjs';
 
@@ -32,7 +33,7 @@ const warnings=L.layerGroup().addTo(map),resources=L.layerGroup().addTo(map),per
 new ResizeObserver(()=>map.invalidateSize()).observe($('map'));
 let toastTimer,guidance;
 function toast(message,error=false){$('toast').textContent=message;$('toast').classList.toggle('error',error);$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,5000);}
-async function api(path,body){const r=await fetch(path,{...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(95000)});const data=await r.json();if(!r.ok)throw new Error(data.error||'The request failed.');return data;}
+async function api(path,body){const r=await fetch(path,{...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(path==='/api/evacuate'?8000:95000)});const data=await r.json();if(!r.ok)throw new Error(data.error||'The request failed.');return data;}
 const context=()=>({region:state.region,mode:state.mode,hazard:state.hazard});
 const selectedWarnings=()=>state.snapshot?evacuationIncidents(state.snapshot,state.hazard).filter(i=>i.category===state.hazard):[];
 const candidates=()=>state.snapshot?destinationCandidates(state.snapshot,state.hazard):[];
@@ -124,7 +125,9 @@ async function loadSnapshot({reset=false,refresh=false}={}){
 }
 async function findRoute(){
   if(!state.origin||!state.snapshot||state.busy)return;const revision=state.revision,epoch=state.epoch;const body={...context(),start:[...state.origin],destinationId:$('destination').value||null};state.busy=true;state.plan=null;renderResult();renderMap();$('planner-error').textContent='';updateControls();
-  try{const plan=state.offline?planEvacuation(state.snapshot,body,{offline:true}):await api('/api/evacuate',body);if(revision!==state.revision||epoch!==state.epoch)return;
+  try{const result=await requestRoute({body,snapshot:state.snapshot,offline:state.offline,online:navigator.onLine,api,loadPack,planEvacuation});if(revision!==state.revision||epoch!==state.epoch)return;
+    const plan=result.plan;
+    if(result.offline){state.offline=true;state.stream?.close();if(result.snapshot){state.snapshot=result.snapshot;state.fingerprint=fingerprint(result.snapshot);renderDestinations();}renderStatus();}
     // Provider recovery can replace a fallback while a user is planning. Display
     // the exact snapshot used by this result, including its source labels.
     if(plan.mapSnapshot){state.snapshot=plan.mapSnapshot;state.fingerprint=fingerprint(plan.mapSnapshot);renderDestinations();renderStatus();}
