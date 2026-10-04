@@ -1,4 +1,4 @@
-const CACHE='wayahead-shell-v27';
+const CACHE='wayahead-shell-v29';
 const SHELL=['/','/index.html','/styles.css','/app.js','/guidance.js','/navigation.js','/conditions.js','/offline.js','/offline-map.js','/city-map.js','/map-download.js','/maps/catalog.json','/route-request.js','/preparedness.js','/vendor/leaflet.js','/vendor/leaflet.css','/vendor/pmtiles.js','/vendor/protomaps-leaflet.js','/icons/logo.svg','/icons/icon-192.png','/icons/icon-512.png','/icons/apple-touch-icon.png','/manifest.webmanifest','/shared/routing.mjs','/shared/geo.mjs','/shared/evacuation.mjs','/shared/route-events.mjs'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});

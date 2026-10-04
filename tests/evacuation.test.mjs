@@ -5,6 +5,28 @@ import {planEvacuation,destinationCandidates,evacuationIncidents} from '../lib/e
 import {pointInGeometry,bboxGeometry,segmentIntersectsGeometry,distanceKm} from '../lib/geo.mjs';
 import {edgeRisk,createRoutePlanner} from '../lib/routing.mjs';
 const now=Date.now();
+test('nearby named facility buildings become one destination, preserving other branches and unnamed sites',()=>{
+  const snapshot={mode:'demo',incidents:[],facilities:[
+    {id:'hill-b',name:'D. H. Hill Library',kind:'library',coordinates:[-78.66962,35.78756]},
+    {id:'hill-a',name:'D H Hill Library',kind:'library',coordinates:[-78.67006,35.78755]},
+    {id:'hill-c',name:'D. H. Hill Library',kind:'library',coordinates:[-78.67028,35.78732]},
+    {id:'branch',name:'D. H. Hill Library',kind:'library',coordinates:[-78.68,35.79]},
+    {id:'unnamed-a',name:'Unnamed library',kind:'library',coordinates:[-78.67,35.78]},
+    {id:'unnamed-b',name:'Unnamed library',kind:'library',coordinates:[-78.6701,35.78]},
+  ]};
+  const result=destinationCandidates(snapshot,'flood');
+  assert.equal(result.length,4);assert.equal(result.filter(f=>f.id.startsWith('hill-')).length,1);
+  assert.ok(result.some(f=>f.id==='hill-a'));assert.ok(result.some(f=>f.id==='branch'));
+  assert.deepEqual(destinationCandidates({...snapshot,facilities:[...snapshot.facilities].reverse()},'flood'),result);
+  assert.equal(snapshot.facilities.length,6);
+});
+test('facility deduplication happens after access and hazard eligibility checks',()=>{
+  const snapshot={mode:'demo',incidents:[],facilities:[
+    {id:'a',name:'Library',kind:'library',access:'private',coordinates:[-78.67,35.78]},
+    {id:'b',name:'Library',kind:'library',access:'yes',coordinates:[-78.6701,35.78]},
+  ]};
+  assert.deepEqual(destinationCandidates(snapshot,'flood').map(f=>f.id),['b']);
+});
 function live(){const s=demoSnapshot('raleigh',now);s.mode='live';s.roads.simulation=false;s.incidents.forEach(i=>i.simulation=false);s.sources=['nws-raleigh','osm-raleigh'].map(id=>({id,status:'live',lastSuccess:new Date(now).toISOString()}));return s;}
 
 for(const region of ['raleigh','wilmington','asheville'])for(const hazard of ['flood','hurricane','heat'])test(`${region} ${hazard}: starts inside one warning and suggests ranked resources outside it`,()=>{

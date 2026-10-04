@@ -66,7 +66,10 @@ function updateControls(){
   $('use-demo-location').hidden=state.mode!=='demo';$('map-watermark').hidden=state.mode!=='demo';$('hazard-hint').textContent=m.hint;$('map-title').textContent=`Your ${m.short} exit plan`;$('legend-label').textContent=`${m.name} warning`;$('safety-link').href=m.url;$('safety-link').textContent=`Read ${m.short} guidance ↗`;$('guidance-title').textContent=`${m.name} guidance`;
   $('demo-road-key').hidden=state.mode!=='demo'||state.hazard!=='flood';
   if(state.mode==='demo'&&state.hazard==='flood')$('hazard-hint').textContent='Demo: green roads are simulated dry roads. Avoid red flooded areas.';
-  $('quick-route').disabled=!state.snapshot||state.busy;$('quick-route').textContent=state.busy?'Finding route…':state.origin?'Find route':'Set location';
+  $('quick-route').disabled=!state.snapshot||state.busy;$('quick-route').textContent=state.busy?'Finding…':'Find route';$('quick-route').disabled=!state.origin||!state.snapshot||state.busy;
+  $('dock-location').textContent=state.origin?'Change GPS':'Use GPS';
+  document.querySelector('.map-result-shortcut').hidden=!state.plan;
+  $('open-route-result').textContent=selectedRoute()?selectedRoute().distanceKm.toFixed(1)+' km · View route':'View route result';
   $('find-route').disabled=!state.origin||!state.snapshot||state.busy;$('find-route').innerHTML=state.busy?'Comparing routes…':`Find a route ${icon('arrow')}`;
   $('map-prompt').hidden=!!state.origin;$('location-card').classList.toggle('set',!!state.origin);
   $('location-title').textContent=state.origin?state.originKind==='example'?'Example starting location':state.originKind==='gps'?'Your GPS location':'Your chosen location':'Choose a starting point';
@@ -135,7 +138,7 @@ function renderResult(){
 function insideCoverage(p){return state.snapshot&&pointInGeometry(p,bboxGeometry(state.snapshot.region.bbox));}
 function setOrigin(p,kind){if(!insideCoverage(p)){toast('That location is outside this coverage area. Select the matching city or choose a point inside its map.',true);return;}state.origin=p;state.originKind=kind;$('origin-lat').value=p[1].toFixed(6);$('origin-lon').value=p[0].toFixed(6);cancelPick();invalidate();renderDestinations();renderMap();map.panTo(latlng(p));}
 function cancelPick(){state.picking=null;$('map-instruction').hidden=true;$('map').style.cursor='';$('pick-location').setAttribute('aria-pressed','false');}
-function startPick(kind){selectFeature('route');state.picking=kind;$('map-detail').hidden=true;$('map-instruction').hidden=false;$('map-instruction').textContent=`Choose ${kind==='report'?'the observation location':'your starting point'} on the map. Esc to cancel.`;$('map').style.cursor='crosshair';$('map-prompt').hidden=true;$('pick-location').setAttribute('aria-pressed',kind==='origin');$('map').scrollIntoView({behavior:'smooth',block:'center'});}
+function startPick(kind){if($('route-options-dialog').open)$('route-options-dialog').close();selectFeature('route');state.picking=kind;$('map-detail').hidden=true;$('map-instruction').hidden=false;$('map-instruction').textContent=`Choose ${kind==='report'?'the observation location':'your starting point'} on the map. Esc to cancel.`;$('map').style.cursor='crosshair';$('map-prompt').hidden=true;$('pick-location').setAttribute('aria-pressed',kind==='origin');$('map').scrollIntoView({behavior:'smooth',block:'center'});}
 function acceptSnapshot(s){const next=fingerprint(s),previous=selectedRoute(),priorIds=new Set((state.snapshot?.reports||[]).map(e=>e.id)),affected=affectingEvents(previous,(s.reports||[]).filter(e=>!priorIds.has(e.id)));if((state.plan||state.busy)&&next!==state.fingerprint)invalidate('Conditions changed. Find a new route before using the plan.');if(affected.length)state.routeChange={events:affected,recalculated:false,previous};state.fingerprint=next;state.snapshot=s;renderDestinations();renderStatus();renderMap();conditionsUI?.render();}
 async function loadSnapshot({reset=false,refresh=false}={}){
   const epoch=++state.epoch,ctx=context();if(state.busy)invalidate();state.stream?.close();state.stream=null;if(reset){state.snapshot=null;state.origin=null;state.originKind=null;invalidate();cancelPick();$('map-detail').hidden=true;renderMap();$('mode-banner').hidden=false;$('mode-banner').textContent='Loading your planner…';}
@@ -146,6 +149,7 @@ async function loadSnapshot({reset=false,refresh=false}={}){
   finally{if(epoch===state.epoch){$('refresh').disabled=false;updateControls();}}
 }
 async function findRoute(){
+  if($('route-options-dialog').open)$('route-options-dialog').close();
   selectFeature('route');
   if(!state.origin||!state.snapshot||state.busy)return;const revision=state.revision,epoch=state.epoch;const body={...context(),start:[...state.origin],destinationId:$('destination').value||null};state.busy=true;state.plan=null;renderResult();renderMap();$('planner-error').textContent='';updateControls();
   try{const result=await requestRoute({body,snapshot:state.snapshot,offline:state.offline,online:navigator.onLine,api,loadPack,planEvacuation});if(revision!==state.revision||epoch!==state.epoch)return;
@@ -154,7 +158,7 @@ async function findRoute(){
     // Provider recovery can replace a fallback while a user is planning. Display
     // the exact snapshot used by this result, including its source labels.
     if(plan.mapSnapshot){state.snapshot=plan.mapSnapshot;state.fingerprint=fingerprint(plan.mapSnapshot);renderDestinations();renderStatus();}
-    state.plan=plan;state.routeIndex=0;if(state.routeChange&&plan.status==='routes_found')state.routeChange.recalculated=true;renderResult();renderMap();fitRoute();if(!document.body.classList.contains('map-fullscreen'))$('route-result').scrollIntoView({behavior:'smooth',block:'nearest'});}catch(error){if(revision===state.revision&&epoch===state.epoch)$('planner-error').textContent=error.message;}
+    state.plan=plan;state.routeIndex=0;if(state.routeChange&&plan.status==='routes_found')state.routeChange.recalculated=true;renderResult();renderMap();fitRoute();if(!mobilePlanner.matches&&!document.body.classList.contains('map-fullscreen'))$('route-result').scrollIntoView({behavior:'smooth',block:'nearest'});}catch(error){if(revision===state.revision&&epoch===state.epoch){$('planner-error').textContent=error.message;toast(error.message,true);}}
   finally{if(revision===state.revision&&epoch===state.epoch){state.busy=false;updateControls();}}
 }
 function showInfo(title,html){$('info-title').textContent=title;$('info-content').innerHTML=html;$('info-dialog').showModal();}
@@ -229,3 +233,18 @@ featureTabs.forEach((button,index)=>{
   button.onkeydown=event=>{let next;if(event.key==='ArrowRight')next=(index+1)%featureTabs.length;else if(event.key==='ArrowLeft')next=(index+featureTabs.length-1)%featureTabs.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=featureTabs.length-1;else return;event.preventDefault();featureTabs[next].focus();selectFeature(featureTabs[next].dataset.view);};
 });
 document.querySelectorAll('a[href="#route-planner"],a[href="#evacuation-map"],a[href="#route-settings"]').forEach(link=>link.addEventListener('click',()=>selectFeature('route')));
+
+const mobilePlanner=matchMedia('(max-width:600px)');
+const settingsHome=$('route-settings').parentElement,resultHome=$('route-result').parentElement;
+function arrangeMobilePlanner(){
+  if($('route-options-dialog').open)$('route-options-dialog').close();
+  if($('route-summary-dialog').open)$('route-summary-dialog').close();
+  if(mobilePlanner.matches){$('route-options-content').append($('route-settings'));$('route-summary-content').append($('route-result'));}
+  else{settingsHome.prepend($('route-settings'));resultHome.append($('route-result'));}
+  requestAnimationFrame(()=>map.invalidateSize());
+}
+mobilePlanner.addEventListener('change',arrangeMobilePlanner);arrangeMobilePlanner();
+$('open-route-options').onclick=()=>$('route-options-dialog').showModal();
+$('open-route-result').onclick=()=>$('route-summary-dialog').showModal();
+$('dock-location').onclick=()=>$('use-location').click();
+$('dock-pick').onclick=()=>startPick('origin');
